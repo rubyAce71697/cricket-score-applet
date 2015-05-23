@@ -59,6 +59,8 @@ class CheckScore:
                 for y in self.ulist:
                     #print "in y"
                     self.string = ""
+                    link = y.find('a')
+                    link = link.get('href')
                     
                     div_int =  y.find("div", {"class":"part-1"})
                     self.string += div_int.find("span", {"class":"team-name"}).get_text().strip() + " "
@@ -107,21 +109,27 @@ class CheckScore:
         self.menu.append(self.quit_item)
         
         
+    def set_timeout(self):
+            gobject.timeout_add(2 , self.check_scores)
+            gobject.threads_init()
+        
     def main(self):
         
         #print "code stops in main self"
-        self.check_scores() 
+        #self.check_scores() 
+        self.set_timeout()
         #print "code returns here"      
         """
         while gtk.events_pending():
             #print "in while main self"
             gtk.main_iteration_do(False)
         """
-        gobject.timeout_add(PING_FREQUENCY*2000 , self.check_scores)
+        #print "in main"
+        #gobject.timeout_add(200 , self.check_scores)
         #timeout = 1 # 5 minutes
         #gobject.timeout_add(100, self.check_scores)
         #print "code stops after ping"
-        self.main()
+        gtk.main()
 
     def menuitem_response(self,widget,i):
         self.label_disp_index = i
@@ -155,7 +163,7 @@ class CheckScore:
         
         ##print "-"*100
         self.cat = self.para.findAll("ul", {"class" :"scoreline-list"})
-        self.i = 0
+        j = 0
         for x in self.cat:
             ##print "in x"
             self.ulist = x.findAll("li",{ "class":"espni-livescores-scoreline"})
@@ -185,15 +193,15 @@ class CheckScore:
                     
                     
                     
-                    self.menu_item[self.i].set_label(self.string)
+                    self.menu_item[j].set_label(self.string)
                     self.ind.set_label(self.menu_item[self.label_disp_index].get_label())
                     
-                    self.i +=1
+                    j +=1
                     
                    
-                    if(self.i == 4):
+                    if(j == 4):
                         break
-        
+        return True
         
 if __name__ == "__main__":
     
