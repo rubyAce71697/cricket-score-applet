@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from gi.repository import Gtk,  Glib
+from gi.repository import Gtk
 from gi.repository import AppIndicator3 as appindicator
 
 import urllib2
