@@ -1,34 +1,37 @@
 #!/usr/bin/env python
 
-from gi.repository import Gtk as gtk
+from gi.repository import Gtk,  Glib
 from gi.repository import AppIndicator3 as appindicator
-from gi.repository import GObject as gobject
+
 import urllib2
 from bs4 import BeautifulSoup
+import thread
+import time
+import signal
 
-PING_FREQUENCY = 1 # second(s)
+REFRESH_TIMEOUT = 5 # second(s)
 SRC_WEBSITE = "http://www.espncricinfo.com/"
 APP_ID = "new-espn-indicator"
-class CheckScore:
+
+class CricketScore:
     def __init__(self):
         self.indicator = appindicator.Indicator.new(APP_ID,
                                         "indicator-messages",
                                         appindicator.IndicatorCategory.APPLICATION_STATUS)
         self.indicator.set_status(appindicator.IndicatorStatus.ACTIVE)
-        #self.indicator.set_attention_icon("new-messages-red")
 
         self.label_disp_index = 0
-        ##print "="*100
 
         # TODO: make menu_setup return the "menu"
         self.menu_setup()
         self.indicator.set_menu(self.menu)
 
+        thread.start_new_thread(self.update_scores, ())
+
     def menu_setup(self):
-        ##print "entered again"
+        self.menu = Gtk.Menu()
 
-        self.menu = gtk.Menu()
-
+        # TODO: merge this with "check_scores"
         self.url = SRC_WEBSITE
         self.content = urllib2.urlopen(self.url).read()
         self.soup = BeautifulSoup(self.content)
@@ -51,8 +54,8 @@ class CheckScore:
                 for y in self.ulist:
                     #print "in y"
                     self.string = ""
-                    link = y.find('a')
-                    link = link.get('href')
+                    #link = y.find('a')
+                    #link = link.get('href')
 
                     div_int =  y.find("div", {"class":"part-1"})
                     self.string += div_int.find("span", {"class":"team-name"}).get_text().strip() + " "
@@ -72,9 +75,9 @@ class CheckScore:
 
                     ##print y.find("span", {"class":"start-time"}).get_text(),
 
-                    #self.menu.append(gtk.MenuItem(self.menu_item).show())
+                    #self.menu.append(Gtk.MenuItem(self.menu_item).show())
                     self.menu_item.append(self.string)
-                    self.menu_item[self.i] = gtk.MenuItem(self.string)
+                    self.menu_item[self.i] = Gtk.MenuItem(self.string)
                     self.menu_item[self.i].show()
                     self.menu.append(self.menu_item[self.i])
                     self.menu_item[self.i].connect("activate", self.menuitem_response,self.i)
@@ -86,47 +89,28 @@ class CheckScore:
             ##print
 
 
-        preferences_item = gtk.MenuItem("Preferences <dummy>")
+        preferences_item = Gtk.MenuItem("Preferences <dummy>")
         preferences_item.connect("activate", self.preferences)
         preferences_item.show()
         self.menu.append(preferences_item)
 
-        quit_item = gtk.MenuItem("Quit")
+        quit_item = Gtk.MenuItem("Quit")
         quit_item.connect("activate", self.quit)
         quit_item.show()
         self.menu.append(quit_item)
 
-
-    def set_timeout(self):
-        #gobject.timeout_add(100 , self.check_scores)
-            #gobject.threads_init()
-            pass
-
-    def main(self):
-        #print "code stops in main self"
-        #self.check_scores() 
-        self.set_timeout()
-        #print "code returns here"      
-
-        """
-        while gtk.events_pending():
-            #print "in while main self"
-            gtk.main_iteration_do(False)
-        """
-
-        #print "in main"
-        #gobject.timeout_add(200 , self.check_scores)
-        #timeout = 1 # 5 minutes
-        #gobject.timeout_add(100, self.check_scores)
-        #print "code stops after ping"
-
-        gtk.main()
+    def update_scores(self):
+        while True:
+            self.check_scores()
+            time.sleep(REFRESH_TIMEOUT)
 
     def menuitem_response(self,widget,i):
         self.label_disp_index = i
+        self.indicator.set_label(self.menu_item[self.label_disp_index].get_label(),"")
+        print 'menuitem_response callbacked'
 
     def quit(self, widget):
-        gtk.main_quit()
+        Gtk.main_quit()
 
     def preferences(self,widget):
         """
@@ -136,18 +120,8 @@ class CheckScore:
 
 
     def check_scores(self):
-        #for widget in self.menu.get_children():
-        #self.menu.remove(widget)
+        print "Checking latest scores..."
 
-        #print "code stops in check_scores"
-        while gtk.events_pending():
-
-            #print "in while"
-            gtk.main_iteration_do(False)
-
-        #self.menu = gtk.Menu()
-
-        #print "-"*100
         self.url = "http://www.espncricinfo.com/"
         self.content = urllib2.urlopen(self.url).read()
         self.soup = BeautifulSoup(self.content)
@@ -187,16 +161,17 @@ class CheckScore:
 
 
 
+                    # TODO: use glib.idle_add for doing "Gtk" updates inside the "Gtk.main" loop
                     self.menu_item[j].set_label(self.string)
-                    self.indicator.set_label(self.menu_item[self.label_disp_index].get_label())
-
                     j +=1
-
 
                     if(j == 4):
                         break
+        print 'Updated Scores!!'
         return True
 
 if __name__ == "__main__":
-    myIndicator = CheckScore()
-    myIndicator.main()
+    signal.signal(signal.SIGINT, signal.SIG_DFL)
+
+    myIndicator = CricketScore()
+    Gtk.main()
