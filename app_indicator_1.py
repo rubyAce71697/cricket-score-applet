@@ -1,49 +1,44 @@
-
 #!/usr/bin/env python
 
-import sys
-import gtk
-import gobject
-import appindicator
+from gi.repository import Gtk
+from gi.repository import AppIndicator3 as appindicator
+
 import urllib2
 from bs4 import BeautifulSoup
-import imaplib
-import re
-from curses.ascii import isspace
-from threading import Thread
+import thread
+import time
+import signal
 
+REFRESH_TIMEOUT = 5 # second(s)
+SRC_WEBSITE = "http://www.espncricinfo.com/"
+APP_ID = "new-espn-indicator"
 
-from prefrences import PyApp
-from bonobo.ui import Widget
-
-PING_FREQUENCY = 1 # seconds
-
-class CheckScore:
+class CricketScore:
     def __init__(self):
+        self.indicator = appindicator.Indicator.new(APP_ID,
+                                        "indicator-messages",
+                                        appindicator.IndicatorCategory.APPLICATION_STATUS)
+        self.indicator.set_status(appindicator.IndicatorStatus.ACTIVE)
+
         self.label_disp_index = 0
-        self.ind = appindicator.Indicator("new-espn-indicator",
-                                           "indicator-messages",
-                                           appindicator.CATEGORY_APPLICATION_STATUS)
-        self.ind.set_status(appindicator.STATUS_ACTIVE)
-        #self.ind.set_attention_icon("new-messages-red")
-        self.pyapp = PyApp()
-        
-        ##print "="*100
-                
+
+        # TODO: make menu_setup return the "menu"
         self.menu_setup()
-        self.ind.set_menu(self.menu)
+        self.indicator.set_menu(self.menu)
+
+        thread.start_new_thread(self.update_scores, ())
 
     def menu_setup(self):
-        ##print "entered again"
-        
-        self.menu = gtk.Menu()
-        self.url = "http://www.espncricinfo.com/"
+        self.menu = Gtk.Menu()
+
+        # TODO: merge this with "check_scores"
+        self.url = SRC_WEBSITE
         self.content = urllib2.urlopen(self.url).read()
         self.soup = BeautifulSoup(self.content)
-        
+
         self.para = self.soup.find("div", {"id": "livescores-full" })
         self.para = self.para.find("div", {"id": "live"})
-        
+
         ##print "-"*100
         self.cat = self.para.findAll("ul", {"class" :"scoreline-list"})
         ##print self.cat
@@ -59,108 +54,81 @@ class CheckScore:
                 for y in self.ulist:
                     #print "in y"
                     self.string = ""
-                    link = y.find('a')
-                    link = link.get('href')
-                    
+                    #link = y.find('a')
+                    #link = link.get('href')
+
                     div_int =  y.find("div", {"class":"part-1"})
                     self.string += div_int.find("span", {"class":"team-name"}).get_text().strip() + " "
                     self.string += div_int.find("span", {"class":"team-score"}).get_text().strip() + " "
                     ##print y.find("div", {"class":"part-1"}).get_text(),
                     #if(not (y.find("span", {"class": "versus"}).get_text().strip())):
                     self.string += y.find("span", {"class": "versus"}).get_text().strip() + " "
-                    
+
                     ##print y.find("span", {"class": "versus"}).get_text(),
                     #self.string += y.find("div", {"class":"part-2"}).get_text().strip() + " "
                     div_int =  y.find("div", {"class":"part-2"})
                     self.string += div_int.find("span", {"class":"team-name"}).get_text().strip() + " "
                     self.string += div_int.find("span", {"class":"team-score"}).get_text().strip() + " "
-                    
+
                     ##print y.find("div", {"class":"part-2"}).get_text(),
                     self.string += " --  " +  y.find("span", {"class":"start-time"}).get_text().strip() + " "
-                    
+
                     ##print y.find("span", {"class":"start-time"}).get_text(),
-                    
-                    #self.menu.append(gtk.MenuItem(self.menu_item).show())
+
+                    #self.menu.append(Gtk.MenuItem(self.menu_item).show())
                     self.menu_item.append(self.string)
-                    self.menu_item[self.i] = gtk.MenuItem(self.string)
+                    self.menu_item[self.i] = Gtk.MenuItem(self.string)
                     self.menu_item[self.i].show()
                     self.menu.append(self.menu_item[self.i])
                     self.menu_item[self.i].connect("activate", self.menuitem_response,self.i)
                     self.i +=1
-                    
+
                     if(self.i == 4):
                         break
                 ##print
             ##print
 
-        
-        
-        self.preferences_item = gtk.MenuItem("Preferences")
-        self.preferences_item.connect("activate", self.preferences)
-        self.preferences_item.show()
-        self.menu.append(self.preferences_item)
-            
 
-        
-        
-        self.quit_item = gtk.MenuItem("Quit")
-        self.quit_item.connect("activate", self.quit)
-        self.quit_item.show()
-        self.menu.append(self.quit_item)
-        
-        
-    def set_timeout(self):
-            gobject.timeout_add(2 , self.check_scores)
-            gobject.threads_init()
-        
-    def main(self):
-        
-        #print "code stops in main self"
-        #self.check_scores() 
-        self.set_timeout()
-        #print "code returns here"      
-        """
-        while gtk.events_pending():
-            #print "in while main self"
-            gtk.main_iteration_do(False)
-        """
-        #print "in main"
-        #gobject.timeout_add(200 , self.check_scores)
-        #timeout = 1 # 5 minutes
-        #gobject.timeout_add(100, self.check_scores)
-        #print "code stops after ping"
-        gtk.main()
+        preferences_item = Gtk.MenuItem("Preferences <dummy>")
+        preferences_item.connect("activate", self.preferences)
+        preferences_item.show()
+        self.menu.append(preferences_item)
+
+        quit_item = Gtk.MenuItem("Quit")
+        quit_item.connect("activate", self.quit)
+        quit_item.show()
+        self.menu.append(quit_item)
+
+    def update_scores(self):
+        while True:
+            self.check_scores()
+            time.sleep(REFRESH_TIMEOUT)
 
     def menuitem_response(self,widget,i):
         self.label_disp_index = i
-        
+        self.indicator.set_label(self.menu_item[self.label_disp_index].get_label(),"")
+        print 'menuitem_response callbacked'
+
     def quit(self, widget):
-        sys.exit(0)
-        
+        Gtk.main_quit()
+
     def preferences(self,widget):
-        self.pyapp.display()
-    
-    
+        """
+        TODO
+        """
+        pass
+
+
     def check_scores(self):
-        #for widget in self.menu.get_children():
-        #self.menu.remove(widget)
-        
-        #print "code stops in check_scores"
-        while gtk.events_pending():
-            
-            #print "in while"
-            gtk.main_iteration_do(False)
-        
-        #self.menu = gtk.Menu()
-        
-        #print "-"*100
+        print "Checking latest scores..."
+
         self.url = "http://www.espncricinfo.com/"
         self.content = urllib2.urlopen(self.url).read()
         self.soup = BeautifulSoup(self.content)
-        
+
         self.para = self.soup.find("div", {"id": "livescores-full" })
         self.para = self.para.find("div", {"id": "live"})
-        
+
         ##print "-"*100
         self.cat = self.para.findAll("ul", {"class" :"scoreline-list"})
         j = 0
@@ -173,37 +141,37 @@ class CheckScore:
                 for y in self.ulist:
                     ##print "in y"
                     self.string = ""
-                    
+
                     div_int =  y.find("div", {"class":"part-1"})
                     self.string += div_int.find("span", {"class":"team-name"}).get_text().strip() + " "
                     self.string += div_int.find("span", {"class":"team-score"}).get_text().strip() + " "
                     ##print y.find("div", {"class":"part-1"}).get_text(),
                     #if(not (y.find("span", {"class": "versus"}).get_text().strip())):
                     self.string += y.find("span", {"class": "versus"}).get_text().strip() + " "
-                    
+
                     ##print y.find("span", {"class": "versus"}).get_text(),
                     #self.string += y.find("div", {"class":"part-2"}).get_text().strip() + " "
                     div_int =  y.find("div", {"class":"part-2"})
                     self.string += div_int.find("span", {"class":"team-name"}).get_text().strip() + " "
                     self.string += div_int.find("span", {"class":"team-score"}).get_text().strip() + " "
-                    
+
                     ##print y.find("div", {"class":"part-2"}).get_text(),
                     self.string += " --  " +  y.find("span", {"class":"start-time"}).get_text().strip() + " "
                     #print self.string
-                    
-                    
-                    
+
+
+
+                    # TODO: use glib.idle_add for doing "Gtk" updates inside the "Gtk.main" loop
                     self.menu_item[j].set_label(self.string)
-                    self.ind.set_label(self.menu_item[self.label_disp_index].get_label())
-                    
                     j +=1
-                    
-                   
+
                     if(j == 4):
                         break
+        print 'Updated Scores!!'
         return True
-        
+
 if __name__ == "__main__":
-    
-    indicator = CheckScore()
-    indicator.main()
+    signal.signal(signal.SIGINT, signal.SIG_DFL)
+
+    myIndicator = CricketScore()
+    Gtk.main()
