@@ -1,6 +1,11 @@
-#!/usr/bin/env python
+"""
 
-from gi.repository import Gtk
+
+    started by Nishant Kukreja(rubyace71697) on 14th May 2015
+    improved by Abhishek Rose(rawcoder)
+
+"""
+from gi.repository import Gtk , GObject
 from gi.repository import AppIndicator3 as appindicator
 
 import urllib2
@@ -9,12 +14,26 @@ import thread
 import time
 import signal
 
+
+
 REFRESH_TIMEOUT = 5 # second(s)
 SRC_WEBSITE = "http://www.espncricinfo.com/"
 APP_ID = "new-espn-indicator"
 
-class CricketScore:
+from selenium import webdriver
+
+driver = webdriver.PhantomJS()
+
+
+GObject.threads_init()
+
+class cric_score_app_menu():
+    
     def __init__(self):
+        
+        
+        
+        
         self.indicator = appindicator.Indicator.new(APP_ID,
                                         "indicator-messages",
                                         appindicator.IndicatorCategory.APPLICATION_STATUS)
@@ -25,9 +44,7 @@ class CricketScore:
         # TODO: make menu_setup return the "menu"
         self.menu_setup()
         self.indicator.set_menu(self.menu)
-
-        thread.start_new_thread(self.update_scores, ())
-
+        
     def menu_setup(self):
         self.menu = Gtk.Menu()
 
@@ -76,6 +93,7 @@ class CricketScore:
                     ##print y.find("span", {"class":"start-time"}).get_text(),
 
                     #self.menu.append(Gtk.MenuItem(self.menu_item).show())
+                    print self.string
                     self.menu_item.append(self.string)
                     self.menu_item[self.i] = Gtk.MenuItem(self.string)
                     self.menu_item[self.i].show()
@@ -98,27 +116,11 @@ class CricketScore:
         quit_item.connect("activate", self.quit)
         quit_item.show()
         self.menu.append(quit_item)
-
-    def update_scores(self):
-        while True:
-            self.check_scores()
-            time.sleep(REFRESH_TIMEOUT)
-
-    def menuitem_response(self,widget,i):
-        self.label_disp_index = i
-        self.indicator.set_label(self.menu_item[self.label_disp_index].get_label(),"")
-        print 'menuitem_response callbacked'
-
-    def quit(self, widget):
-        Gtk.main_quit()
-
-    def preferences(self,widget):
-        """
-        TODO
-        """
-        pass
-
-
+        thread.start_new_thread(self.update_scores, ())
+        #thread.start_new_thread(self.update_submenu, ())
+    
+    
+    
     def check_scores(self):
         print "Checking latest scores..."
 
@@ -162,16 +164,62 @@ class CricketScore:
 
 
                     # TODO: use glib.idle_add for doing "Gtk" updates inside the "Gtk.main" loop
-                    self.menu_item[j].set_label(self.string)
+                    #self.menu_item[j].set_label(self.string)
+                    GObject.idle_add(self.set_menu_item , j ,self.string)
+                    
+                    #check for updated label
+                    if( j == self.label_disp_index):
+                        GObject.idle_add(self.set_indicator_status)
+                    
                     j +=1
 
+                    
                     if(j == 4):
                         break
+        
+        
+        
+        
+                    
         print 'Updated Scores!!'
         return True
+
+        
+    def menuitem_response(self,widget,i):
+        self.label_disp_index = i
+        self.indicator.set_label(self.menu_item[self.label_disp_index].get_label(),"")
+        print 'menuitem_response callbacked'
+
+    def quit(self, widget):
+        Gtk.main_quit()
+
+    def preferences(self,widget):
+        """
+        TODO
+        """
+        pass
+
+    def update_scores(self):
+        while True:
+            self.check_scores()
+            time.sleep(REFRESH_TIMEOUT)
+            
+    
+    
+    
+    def set_menu_item(self, i , info_string ):
+        print "set menu item"
+        print info_string
+        self.menu_item[i].set_label( info_string)
+
+    def set_indicator_status(self):
+        print "set indicator status"
+        self.indicator.set_label(self.menu_item[self.label_disp_index].get_label(),"")
+
+
 
 if __name__ == "__main__":
     signal.signal(signal.SIGINT, signal.SIG_DFL)
 
-    myIndicator = CricketScore()
+    myIndicator = cric_score_app_menu()
     Gtk.main()
