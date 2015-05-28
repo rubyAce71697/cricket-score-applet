@@ -102,9 +102,8 @@ class cric_score_app_menu():
                     self.menu.append(self.menu_item[self.i])
                     self.menu_item[self.i].connect("activate", self.menuitem_response,self.i)
                     self.i +=1
-
-                    if(self.i == 4):
-                        break
+                    
+                    
                 ##print
             ##print
 
@@ -124,8 +123,8 @@ class cric_score_app_menu():
     
     
     def check_scores(self):
-        print "Checking latest scores..."
-
+        print "Checking latest scores..." + str(self.i)
+        
         self.url = "http://www.espncricinfo.com/"
         self.content = urllib2.urlopen(self.url).read()
         self.soup = BeautifulSoup(self.content)
@@ -167,6 +166,7 @@ class cric_score_app_menu():
 
                     # TODO: use glib.idle_add for doing "Gtk" updates inside the "Gtk.main" loop
                     #self.menu_item[j].set_label(self.string)
+                    print "before calling  " + str(j)
                     GObject.idle_add(self.set_menu_item , j ,self.string)
                     
                     #check for updated label
@@ -176,10 +176,6 @@ class cric_score_app_menu():
                     j +=1
 
                     
-                    if(j == 4):
-                        break
-        
-        
         
         
                     
@@ -204,15 +200,16 @@ class cric_score_app_menu():
     def update_scores(self):
         while True:
             self.check_scores()
-            time.sleep(REFRESH_TIMEOUT)
+            #time.sleep(REFRESH_TIMEOUT)
             
     
     
     
-    def set_menu_item(self, i , info_string ):
+    def set_menu_item(self, index , info_string ):
         print "set menu item"
+        print "in set_menu_item " + str(index)
         print info_string
-        self.menu_item[i].set_label( info_string)
+        self.menu_item[index].set_label( info_string)
 
     def set_indicator_status(self):
         print "set indicator status"
