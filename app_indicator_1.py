@@ -1,5 +1,5 @@
 """
-
+    making a fucking awesome applet
 
     started by Nishant Kukreja(rubyace71697) on 14th May 2015
     improved by Abhishek Rose(rawcoder)
@@ -26,6 +26,8 @@ driver = webdriver.PhantomJS()
 
 
 GObject.threads_init()
+
+
 
 class cric_score_app_menu():
     
