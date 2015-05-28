@@ -1,5 +1,5 @@
 """
-    making a fucking awesome applet
+    making of a fucking awesome applet
 
     started by Nishant Kukreja(rubyace71697) on 14th May 2015
     improved by Abhishek Rose(rawcoder)
