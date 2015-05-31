@@ -4,7 +4,15 @@
     started by Nishant Kukreja(rubyace71697) on 14th May 2015
     improved by Abhishek Rose(rawcoder)
 
+    
+
+    Topic : use espncricinfo.com 's internal website calls to get the score
+        summary in json format. 
+        No scrapping is done in this module
+        It only contains the summary menu 
 """
+
+
 from gi.repository import Gtk , GObject
 from gi.repository import AppIndicator3 as appindicator
 
@@ -13,6 +21,8 @@ from bs4 import BeautifulSoup
 import thread
 import time
 import signal
+import json
+import requests
 
 
 
@@ -51,60 +61,55 @@ class cric_score_app_menu():
         self.menu = Gtk.Menu()
 
         # TODO: merge this with "check_scores"
-        self.url = SRC_WEBSITE
-        self.content = urllib2.urlopen(self.url).read()
-        self.soup = BeautifulSoup(self.content)
-
-        self.para = self.soup.find("div", {"id": "livescores-full" })
-        self.para = self.para.find("div", {"id": "live"})
-
-        ##print "-"*100
-        self.cat = self.para.findAll("ul", {"class" :"scoreline-list"})
-        ##print self.cat
-        self.menu_item   = []
-        self.string = ""
+        r = requests.get("http://www.espncricinfo.com/netstorage/summary.json")
+        r= r.json()
+        self.menu_item = []
         self.i = 0
-        for x in self.cat:
-            ##print "in x"
-            self.ulist = x.findAll("li",{ "class":"espni-livescores-scoreline"})
-            if(self.ulist):
-                #print "in if"
-                self.string = ""
-                for y in self.ulist:
-                    #print "in y"
-                    self.string = ""
-                    #link = y.find('a')
-                    #link = link.get('href')
-
-                    div_int =  y.find("div", {"class":"part-1"})
-                    self.string += div_int.find("span", {"class":"team-name"}).get_text().strip() + " "
-                    self.string += div_int.find("span", {"class":"team-score"}).get_text().strip() + " "
-                    ##print y.find("div", {"class":"part-1"}).get_text(),
-                    #if(not (y.find("span", {"class": "versus"}).get_text().strip())):
-                    self.string += y.find("span", {"class": "versus"}).get_text().strip() + " "
-
-                    ##print y.find("span", {"class": "versus"}).get_text(),
-                    #self.string += y.find("div", {"class":"part-2"}).get_text().strip() + " "
-                    div_int =  y.find("div", {"class":"part-2"})
-                    self.string += div_int.find("span", {"class":"team-name"}).get_text().strip() + " "
-                    self.string += div_int.find("span", {"class":"team-score"}).get_text().strip() + " "
-
-                    ##print y.find("div", {"class":"part-2"}).get_text(),
-                    self.string += " --  " +  y.find("span", {"class":"start-time"}).get_text().strip() + " "
-
-                    ##print y.find("span", {"class":"start-time"}).get_text(),
-
-                    #self.menu.append(Gtk.MenuItem(self.menu_item).show())
-                    print self.string
-                    self.menu_item.append(self.string)
-                    self.menu_item[self.i] = Gtk.MenuItem(self.string)
-                    self.menu_item[self.i].show()
-                    self.menu.append(self.menu_item[self.i])
-                    self.menu_item[self.i].connect("activate", self.menuitem_response,self.i)
-                    self.i +=1
+        for x in r['matches']:
+            #print r['matches'][x]
+            self.string = ""
+            print
+            print str(r['matches'][x]['team1_name']),
+            self.string += str(r['matches'][x]['team1_name']).strip().replace('&nbsp;', " ")
+            if(str(r['matches'][x]['team1_score']).strip()):
+                print "-",
+                print str(r['matches'][x]['team1_score']).strip().replace('&nbsp;', " "),
+                self.string += str(r['matches'][x]['team1_score']).strip().replace('&nbsp;', " ")
+            print "vs",
+            self.string += "vs"
+            print str(r['matches'][x]['team2_name']).strip(),
+            self.string +=str (r['matches'][x]['team2_name']).strip().replace('&nbsp;', " ")
+            if(str(r['matches'][x]['team2_score']).strip()):
+                print "-",
+                print str(r['matches'][x]['team2_score']).strip().replace('&nbsp;', " "),
+                self.string += str(r['matches'][x]['team2_score']).strip().replace('&nbsp;', " ")
+            #print " " + r['matches'][x]['start_string'],
+            if ( 'start_string' in r['matches'][x]):
+                print "- " + str(r['matches'][x]['start_string']).replace('&nbsp;', " "),
+                self.string += str(r['matches'][x]['start_string']).strip().replace('&nbsp;', " ")
+            if( 'start_time' in r['matches'][x]):
+                #print " " + str(r['matches'][x]['start_string']).replace('&nbsp;', " ")
+                pass
+            #self.match_item.append(self.match_info)
+            self.menu_item.append(Gtk.MenuItem(self.string))
+            #self.menu_item[self.i] = Gtk.MenuItem(self.string)
+                   
+            #self.submenu.append(Gtk.Menu())
+              
+            #self.submenu_item.append(Gtk.MenuItem(self.string))
+            #self.menu_item[self.i].set_submenu(self.submenu[self.i])
+            #self.submenu[self.i].append(self.submenu_item[self.i])
+            self.menu_item[self.i].show()
+            self.menu.append(self.menu_item[self.i])
+            """
+                Wait for the change
+            """
+            self.menu_item[self.i].connect("activate", self.menuitem_response,self.i)
                     
+            self.i +=1
+                            
                     
-                ##print
+            ##print
             ##print
 
 
@@ -123,57 +128,77 @@ class cric_score_app_menu():
     
     
     def check_scores(self):
+        
         print "Checking latest scores..." + str(self.i)
         
-        self.url = "http://www.espncricinfo.com/"
-        self.content = urllib2.urlopen(self.url).read()
-        self.soup = BeautifulSoup(self.content)
+        r = requests.get("http://www.espncricinfo.com/netstorage/summary.json")
+        r= r.json()
+        start_string = ""
+        j =0
+        for x in r['matches']:
+            #print r['matches'][x]
+            self.string = ""
+            print
+            print str(r['matches'][x]['team1_name']),
+            self.string += str(r['matches'][x]['team1_name']).strip().replace('&nbsp;', " ")
+            if(str(r['matches'][x]['team1_score']).strip()):
+                print "-",
+                self.string += " - "
+                print str(r['matches'][x]['team1_score']).strip().replace('&nbsp;', " "),
+                self.string += str(r['matches'][x]['team1_score']).strip().replace('&nbsp;', " ")
+            print "vs",
+            self.string += " vs "
+            print str(r['matches'][x]['team2_name']).strip(),
+            self.string +=str (r['matches'][x]['team2_name']).strip().replace('&nbsp;', " ")
+            if(str(r['matches'][x]['team2_score']).strip()):
+                print "-",
+                self.string += " - "
+                print str(r['matches'][x]['team2_score']).strip().replace('&nbsp;', " "),
+                self.string += str(r['matches'][x]['team2_score']).strip().replace('&nbsp;', " ")
+            
+            
+            
+            if ( 'start_string' in r['matches'][x]):
+                print "start_string"
+                self.string += " - "
+                print "- " + str(r['matches'][x]['start_string']).replace('&nbsp;', " "),
+                start_string = str(r['matches'][x]['start_string']).strip().replace('&nbsp;', " ").strip()
+                self.string += str(r['matches'][x]['start_string']).strip().replace('&nbsp;', " ")
+            
+            
+            if(not start_string and 'start_time' in r['matches'][x]):
+                print "start_time"
+                print " " + str(r['matches'][x]['start_time']).replace('&nbsp;', " ")
+                self.string += " - "
+                self.string += str(r['matches'][x]['start_time']).replace('&nbsp;', " ")
+                pass
+                ##print "-"*100
+        
+            if( 'match_clock' in r['matches'][x]):
+                self.string += " - begins in - " + str(r['matches'][x]['match_clock']).replace('&nbsp;', " ")
+                print " - begins in - " + str(r['matches'][x]['match_clock']).replace('&nbsp;', " ")
+                pass
 
-        self.para = self.soup.find("div", {"id": "livescores-full" })
-        self.para = self.para.find("div", {"id": "live"})
-
-        ##print "-"*100
-        self.cat = self.para.findAll("ul", {"class" :"scoreline-list"})
-        j = 0
-        for x in self.cat:
-            ##print "in x"
-            self.ulist = x.findAll("li",{ "class":"espni-livescores-scoreline"})
-            if(self.ulist):
-                ##print "in if"
-                self.string = ""
-                for y in self.ulist:
-                    ##print "in y"
-                    self.string = ""
-
-                    div_int =  y.find("div", {"class":"part-1"})
-                    self.string += div_int.find("span", {"class":"team-name"}).get_text().strip() + " "
-                    self.string += div_int.find("span", {"class":"team-score"}).get_text().strip() + " "
-                    ##print y.find("div", {"class":"part-1"}).get_text(),
-                    #if(not (y.find("span", {"class": "versus"}).get_text().strip())):
-                    self.string += y.find("span", {"class": "versus"}).get_text().strip() + " "
-
-                    ##print y.find("span", {"class": "versus"}).get_text(),
-                    #self.string += y.find("div", {"class":"part-2"}).get_text().strip() + " "
-                    div_int =  y.find("div", {"class":"part-2"})
-                    self.string += div_int.find("span", {"class":"team-name"}).get_text().strip() + " "
-                    self.string += div_int.find("span", {"class":"team-score"}).get_text().strip() + " "
-
-                    ##print y.find("div", {"class":"part-2"}).get_text(),
-                    self.string += " --  " +  y.find("span", {"class":"start-time"}).get_text().strip() + " "
-                    #print self.string
+            if( 'result' in r['matches'][x]):
+                self.string += " - " + str(r['matches'][x]['result']).replace('&nbsp;', " ")
+                print " - " + str(r['matches'][x]['result']).replace('&nbsp;', " ")
+                pass
+        
+            
 
 
 
-                    # TODO: use glib.idle_add for doing "Gtk" updates inside the "Gtk.main" loop
-                    #self.menu_item[j].set_label(self.string)
-                    print "before calling  " + str(j)
-                    GObject.idle_add(self.set_menu_item , j ,self.string)
-                    
-                    #check for updated label
-                    if( j == self.label_disp_index):
-                        GObject.idle_add(self.set_indicator_status)
-                    
-                    j +=1
+
+                # TODO: use glib.idle_add for doing "Gtk" updates inside the "Gtk.main" loop
+                #self.menu_item[j].set_label(self.string)
+            print "before calling  " + str(j)
+            GObject.idle_add(self.set_menu_item , j ,self.string)
+            
+            #check for updated label
+            if( j == self.label_disp_index):
+                GObject.idle_add(self.set_indicator_status)
+                
+            j +=1
 
                     
         
@@ -200,7 +225,7 @@ class cric_score_app_menu():
     def update_scores(self):
         while True:
             self.check_scores()
-            #time.sleep(REFRESH_TIMEOUT)
+            time.sleep(REFRESH_TIMEOUT-3)
             
     
     
