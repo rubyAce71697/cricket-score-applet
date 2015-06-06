@@ -4,5 +4,5 @@ After being fed of opening ESPN Cricinfo for checking the scores while working. 
 Scrapped the ESPN Cricinfo website and display live scores in the panel.
 Menu displays the all the current matches as displayed in the ESPN Cricinfo website.
 
-![score as indicator](screenshots/label1.png)
+![score as indicator](screenshots/label1.png "indicator as label")
 
