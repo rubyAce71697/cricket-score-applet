@@ -30,12 +30,6 @@ class espn_ind:
         # initialize the appindicator
         self.indicator = appindicator.Indicator.new(APP_ID,"indicator-messages",appindicator.IndicatorCategory.APPLICATION_STATUS)
 
-<<<<<<< HEAD
-        
-=======
-        self.indicator.set_status(appindicator.IndicatorStatus.ACTIVE)
-
->>>>>>> 99817f2dc6073b7a4d97dbaa39ea74ec2a401516
         self.scrap = espn_scrap()
 
         # create the menu and submenu
@@ -94,15 +88,6 @@ class espn_ind:
 
         # you have to attatch the window in future
         self.preferences_item = Gtk.MenuItem("Preferences <beware its not working>")
-<<<<<<< HEAD
-        
-        #self.preferences_item.connect("activate", self.preferences_display)
-        
-=======
-
-        #self.preferences_item.connect("activate", self.preferences)
-
->>>>>>> 99817f2dc6073b7a4d97dbaa39ea74ec2a401516
         self.menu.append(self.preferences_item)
         self.preferences_item.show()
 
@@ -124,14 +109,6 @@ class espn_ind:
 
         Gtk.main_quit()
 
-<<<<<<< HEAD
-
-    def prefrences_show(slef,widget):
-        #preferences.display()
-        pass
-        
-=======
->>>>>>> 99817f2dc6073b7a4d97dbaa39ea74ec2a401516
     def show_clicked(self,widget, i):
         self.label_disp_index = i
         GObject.idle_add(self.set_indicator_status)
