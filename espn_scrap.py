@@ -1,119 +1,117 @@
-'''
+"""
 Created on 06-Jun-2015
 
 @author: nishant
-'''
+"""
 
-import urllib2
-from bs4 import BeautifulSoup
-import thread
-import time
-import signal
-import json
 import requests
 
-class espn_scrap(object):
+SUMMARY_URL = "http://www.espncricinfo.com/netstorage/summary.json"
+
+class espn_scrap:
     def __init__(self):
-        #self.match = ""
-        self.base_url = "http://www.espncricinfo.com/netstorage/summary.json"
-        self.match_component = ""
-        #self.match_component_url = "http://www.espncricinfo.com/" + self.match
-        self.count = 0
-
         # for maintaing list of matches
-        self.match = []
-        self.match_info = {}
-
+        match_info = {}
         """
-            self.match_info = {}
-            it will contain following properties:
+            "match_info" will contain following properties:
 
-            match_score_summary :
-            {
-                eg:
-                Kent - 73/2 (9.2/20 ov) vs Gloucs
+            match_score_summary {
+                eg: "Kent - 73/2 (9.2/20 ov) vs Gloucs"
             }
 
-            match_scorecard_summary:
-            {
+            match_scorecard_summary {
                 can be empty as only international matches return 'centre'
                 will be scrapping more later
             }
 
-            match_url:
-            {
-                url is in json
+            match_url {
+                url is of json
                 response is json format
-                eg:
-                http://www.espncricinfo.com/natwest-t20-blast-2015/engine/match/804513.json
+                eg: "http://www.espncricinfo.com/natwest-t20-blast-2015/engine/match/804513.json"
             }
+        """
+        self.dummy_match_info = {
+                'match_score_summary': 'No data available: check networking settings',
+                'match_scorecard_summary': 'No summary available',
+                'match_url': 'http://127.0.0.1',
+                }
+
+        # set the parameters which will be sent with each request
+        self.requestParam = {}
+        self.requestParam['Host'] = "www.espncricinfo.com"
+        self.requestParam['User-Agent'] = "Mozilla/5.0 (X11; Ubuntu; Linux) Firefox"
+        self.requestParam['Accept'] = "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
+        self.requestParam['Accept-Encoding'] = "gzip,deflate"
+        self.requestParam['Cookie'] = ""
+        self.requestParam['Connection'] = "keep-alive"
+        self.requestParam['Cache-Control'] = "max-age=0"
 
         """
+        Data fields returned by JSON:
+            live_match,     // boolean flag
+            match_clock,    // time duration from start
+            url,
+            result,
+            team1_abbrev, team1_name, team1_score,
+            team2_abbrev, team2_name, team2_score,
+            start_string,   // local + GMT time
+            start_time      // data + time
+        NOTE: incomplete list
+        """
 
-    def check_scores(self):
-        r = requests.get("http://www.espncricinfo.com/netstorage/summary.json")
-        r = r.json()
+    def get_matches_summary(self):
+        try:
+            all_matches = (requests.get(SUMMARY_URL)).json()['matches']
+        except Exception as err:
+            print ('Exception: ', err)
+            return [self.dummy_match_info]
 
         # Here the data is scrapped
         self.match = []
-        for x in r['matches']:
-            self.string = ""
-            self.match_info ={}
+        for i in all_matches:
+            # TODO: consider using match_clock if startstring is not available
+            summary_text = "{team1}{team1score} vs {team2}{team2score} {startstring}".format(
+                    team1       = all_matches[i]['team1_name'].strip().replace('&nbsp;', " "),
+                    team1score  = (" - " + all_matches[i]['team1_score'].strip().replace('&nbsp;', " ")) if all_matches[i]['team1_score'].strip() else "",
+                    team2       = all_matches[i]['team2_name'].strip().replace('&nbsp;', " "),
+                    team2score  = (" - " + all_matches[i]['team2_score'].strip().replace('&nbsp;', " ")) if all_matches[i]['team2_score'].strip() else "",
+                    startstring = (" - " + str(all_matches[i]['start_string']).strip().replace('&nbsp;', " ")) if 'start_string' in all_matches[i] else ""
+                    )
 
-            self.match_info['match_url'] = r['matches'][x]['url']
+            match_info = {
+                    'match_url':               all_matches[i]['url'],
+                    'match_score_summary':     summary_text,
+                    'match_scorecard_summary': "Loading"
+                    }
 
-            self.string += str(r['matches'][x]['team1_name']).strip().replace('&nbsp;', " ") + " "
-
-
-            if(str(r['matches'][x]['team1_score']).strip()):
-                self.string += "- " + str(r['matches'][x]['team1_score']).strip().replace('&nbsp;', " ")
-
-            self.string += " vs "
-            self.string +=  str (r['matches'][x]['team2_name']).strip().replace('&nbsp;', " ") + " "
-
-            if(str(r['matches'][x]['team2_score']).strip()):
-                self.string += "- " + str(r['matches'][x]['team2_score']).strip().replace('&nbsp;', " ")
-
-            if ( 'start_string' in r['matches'][x]):
-                self.string += "- " + str(r['matches'][x]['start_string']).strip().replace('&nbsp;', " ")
-
-            if( 'start_time' in r['matches'][x]):
-                pass
-            self.match_info['match_score_summary'] = self.string
-            self.match_info['match_scorecard_summary'] = "Loading"
-
-            self.match.append(self.match_info)
+            self.match.append(match_info)
 
         return self.match
 
-    def check_match_summary(self,url,count):
-        param= {}
-        param['Host'] = "www.espncricinfo.com"
-        param['User-Agent'] = "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:38.0) Gecko/20100101 Firefox/38.0"
-        param['Accept'] = "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
-        param['Accept-Encoding'] = "gzip,deflate"
-        param['Cookie'] = "s_pers=%20s_c24%3D1433087687735%7C1527695687735%3B%20s_c24_s%3DLess%2520than%25201%2520day%7C1433089487735%3B%20s_gpv_pn%3Dcricinfo%253Ahomepage%253Ahomepage%7C1433089487737%3B; _chartbeat2=C6K2flB0OrL0sV_y4.1419663132639.1433087691535.1111111100111111; __unam=7273b75-14a8ca09eb5-29172e7b-10; _cb_ls=1; tscookie=%5B%7B%22mtext%22%3A%22NZ%20%20350%20V%20Eng%20%20253%2F5%22%2C%22mid%22%3A%22743941%22%2C%22mlink%22%3A%22%2Fengland-v-new-zealand-2015%2Fengine%2Fmatch%2F743941.html%22%7D%2C%7B%22mtext%22%3A%22Pak%20%20V%20Zim%20%22%2C%22mid%22%3A%22868731%22%2C%22mlink%22%3A%22%2Fpakistan-zimbabwe-2015%2Fengine%2Fmatch%2F868731.html%22%7D%2C%7B%22mtext%22%3A%22Derbs%20%20V%20Glouc%20%22%2C%22mid%22%3A%22804349%22%2C%22mlink%22%3A%22%2Fcounty-championship-div2-2015%2Fengine%2Fmatch%2F804349.html%22%7D%5D; s_sess=%20s_cc%3Dtrue%3B%20s_sq%3D%3B%20s_omni_lid%3D%3B; bentonLoaded=true"
-        param['Connection'] = "keep-alive"
-        param['Cache-Control'] = "max-age=0"
-        j = requests.get(url, headers = param)
-        j = j.json()
+    def check_match_summary(self, url, count):
+        try:
+            json_data = (requests.get(url, headers = self.requestParam)).json()
+        except Exception as err:
+            print ('Exception: ', err)
+            return self.dummy_match_info
+
         match_summary = ""
 
-        for x in j:
+        for x in json_data:
             pass
 
-        for x in j['centre']:
+        for x in json_data['centre']:
             pass
 
         """
-        for x in j['centre']['fow'][0]:
+        for x in json_data['centre']['fow'][0]:
             #print
             #print x + ":",
-            #print j['centre']['fow'][0][x]
+            #print json_data['centre']['fow'][0][x]
 
             if(x == 'player'):
                 #print
-                for y in j['centre']['fow'][0][x]:
+                for y in json_data['centre']['fow'][0][x]:
                     #print
                     #print "player "
                     #print y
@@ -122,8 +120,8 @@ class espn_scrap(object):
                         #print y[z]
         """
         """
-        if('batting' in  j['centre']):
-            for x in j['centre']['batting']:
+        if('batting' in  json_data['centre']):
+            for x in json_data['centre']['batting']:
                 ##print "player : "+ str(x)
                 #print
                 for y in x:
@@ -134,11 +132,11 @@ class espn_scrap(object):
 
         """
 
-        match_summary += "\n" + str(j['live']['status'])
-        match_summary += "\n" + str(j['live']['break']) + "\n"
+        match_summary += "\n" + str(json_data['live']['status'])
+        match_summary += "\n" + str(json_data['live']['break']) + "\n"
 
-        if( 'batting' in j['centre']):
-            bat = j['centre']['batting']
+        if( 'batting' in json_data['centre']):
+            bat = json_data['centre']['batting']
 
             match_summary += "\n<b>Batsman\n"
             for x in bat:
@@ -157,9 +155,9 @@ class espn_scrap(object):
                 match_summary +=  "\n" + "out/not out                     : " + str(x['dismissal_name'])
                 match_summary += "\n"
 
-        if ('bowling' in j['centre']):
+        if ('bowling' in json_data['centre']):
             match_summary += "\n\nBowlers\n"
-            bat = j['centre']['bowling']
+            bat = json_data['centre']['bowling']
             for x in bat:
                 """
                 for y in x:

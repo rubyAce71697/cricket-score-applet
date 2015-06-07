@@ -47,7 +47,7 @@ class espn_ind:
         self.menu = Gtk.Menu()
 
 
-        self.match = self.scrap.check_scores()
+        self.match = self.scrap.get_matches_summary()
         self.match_item_menu = []
 
         i = 0
@@ -139,7 +139,7 @@ class espn_ind:
         """
             TODO: make a new function for getting the data
         """
-        self.match = self.scrap.check_scores()
+        self.match = self.scrap.get_matches_summary()
         j = 0
 
         for match_info in self.match:
