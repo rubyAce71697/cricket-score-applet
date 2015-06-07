@@ -7,6 +7,7 @@ Created on 06-Jun-2015
 from gi.repository import Gtk , GObject
 from gi.repository import AppIndicator3 as appindicator
 from espn_scrap import espn_scrap
+
 import urllib2
 from bs4 import BeautifulSoup
 import thread
@@ -58,7 +59,7 @@ class espn_ind(object):
         self.match_item_menu = []
 
 
-
+        
         self.scrap = espn_scrap()
 
 
@@ -166,7 +167,7 @@ class espn_ind(object):
         """
         self.preferences_item = Gtk.MenuItem("Preferences <beware its not working>")
         
-        #self.preferences_item.connect("activate", self.preferences)
+        #self.preferences_item.connect("activate", self.preferences_display)
         
         self.menu.append(self.preferences_item)
         self.preferences_item.show()
@@ -202,9 +203,14 @@ class espn_ind(object):
     
     
     def quit(self, widget):
+
         Gtk.main_quit()
 
 
+    def prefrences_show(slef,widget):
+        #preferences.display()
+        pass
+        
     def show_clicked(self,widget, i):
         self.label_disp_index = i
         GObject.idle_add(self.set_indicator_status)
