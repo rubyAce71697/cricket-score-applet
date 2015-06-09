@@ -13,6 +13,8 @@ class espn_scrap:
         # for maintaing list of matches
         match_info = {}
         """
+            TODO: Update the new fields
+
             "match_info" will contain following properties:
 
             match_score_summary {
@@ -32,6 +34,8 @@ class espn_scrap:
         """
         self.dummy_match_info = {
                 'match_score_summary': 'No data available: check networking settings',
+                'match_description': 'No description available',
+                'match_ball' : "No description available",
                 'match_scorecard_summary': 'No summary available',
                 'match_url': 'http://127.0.0.1',
                 }
@@ -49,6 +53,8 @@ class espn_scrap:
         """
         Data fields returned by JSON:
             live_match,     // boolean flag
+            description,    //info about match
+            match_ball,
             match_clock,    // time duration from start
             url,
             result,
@@ -72,20 +78,26 @@ class espn_scrap:
             # TODO: consider using match_clock if startstring is not available
             summary_text = "{team1}{team1score} vs {team2}{team2score} {startstring}".format(
                     team1       = all_matches[i]['team1_name'].strip().replace('&nbsp;', " "),
-                    team1score  = (" - " + all_matches[i]['team1_score'].strip().replace('&nbsp;', " ")) if all_matches[i]['team1_score'].strip() else "",
+                    team1score  = (" - " + all_matches[i]['team1_score'].strip().replace('&nbsp;', " ").replace('&amp;', '&')) if all_matches[i]['team1_score'].strip() else "",
                     team2       = all_matches[i]['team2_name'].strip().replace('&nbsp;', " "),
-                    team2score  = (" - " + all_matches[i]['team2_score'].strip().replace('&nbsp;', " ")) if all_matches[i]['team2_score'].strip() else "",
+                    team2score  = (" - " + all_matches[i]['team2_score'].strip().replace('&nbsp;', " ").replace('&amp;', '&')) if all_matches[i]['team2_score'].strip() else "",
                     startstring = (" - " + str(all_matches[i]['start_string']).strip().replace('&nbsp;', " ")) if 'start_string' in all_matches[i] else ""
                     )
 
+            
             match_info = {
                     'match_url':               all_matches[i]['url'],
+                    
                     'match_score_summary':     summary_text,
                     'match_scorecard_summary': "Loading"
                     }
 
             self.match.append(match_info)
-
+            """
+            print "in get matches summary"
+            for s in self.match:
+                print s
+            """
         return self.match
 
     def check_match_summary(self, url, count):
@@ -131,7 +143,12 @@ class espn_scrap:
                     match_summary += str(y) + ": " + str(x[y])
 
         """
+        self.match[count]['match_ball'] = ""
+        if(json_data['live']['recent_overs']):
+            self.match[count]['match_ball'] = json_data['live']['recent_overs'][-1][-1]['ball']
 
+        #print "in espn_scrap : " + str(count) + " : " +  json_data['live']['recent_overs'][-1][-1]['ball']
+        self.match[count]['description'] = json_data['description']
         match_summary += "\n" + str(json_data['live']['status'])
         match_summary += "\n" + str(json_data['live']['break']) + "\n"
 
@@ -177,5 +194,7 @@ class espn_scrap:
                 match_summary += "\n"
 
         self.match[count]['match_scorecard_summary'] = match_summary
+        #print "in espn_scrap"
+        #print self.match[count]['description']
 
         return self.match[count]
