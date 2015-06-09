@@ -1,0 +1,4 @@
+Icon Author: VisualPharm
+
+HomePage: http://www.visualpharm.com
+License: Free for non-commercial use.
