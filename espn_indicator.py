@@ -15,20 +15,19 @@ import time
 import signal
 import json
 import requests
-import os.path
+from os import path
 import sys
 
 REFRESH_TIMEOUT = 2 # second(s)
 PING_FREQUENCY = 1 # seconds
 APP_ID = "new-espn-indicator"
-ICON_PATH = "/home/nishant/workspace/cricket-score-applet/screenshots/1.png"
+ICON_PATH = path.join(path.abspath(path.curdir), "screenshots/1.png")
 
 class espn_ind:
     def __init__(self):
         """
         Initialize appindicator and other menus
         """
-        
 
         # initialize the appindicator
         self.indicator = appindicator.Indicator.new(APP_ID , ICON_PATH , appindicator.IndicatorCategory.APPLICATION_STATUS)
@@ -40,7 +39,7 @@ class espn_ind:
         self.menu_setup()
         self.indicator.set_menu(self.menu)
 
-        
+
 
     def menu_setup(self):
         """
@@ -61,8 +60,8 @@ class espn_ind:
         for match_info in self.match:
             self.match_item = {}
 
-            
-            
+
+
 
             self.match_item = {
 
@@ -86,7 +85,7 @@ class espn_ind:
             self.match_item['submenu'].append(self.match_item['scorecard'])
             self.match_item['label'].set_submenu(self.match_item['submenu'])
             img = Gtk.Image()
-            img.set_from_file("/home/nishant/workspace/cricket-score-applet/screenshots/six.png")
+            img.set_from_file(path.join(path.abspath(path.curdir), "screenshots/six.png"))
             self.match_item['label'].set_image(img)
             self.match_item['label'].set_always_show_image(True)
 
@@ -166,7 +165,7 @@ class espn_ind:
         print "in espn_indicator.py"
         print "in update_labels"
         print "json data"
-        
+
         for x in self.match:
             print x
         """
@@ -200,8 +199,8 @@ class espn_ind:
     def set_indicator_status(self, icon_name):
         self.indicator.set_label(self.match_item_menu[self.label_disp_index]["label_text"],"")
         print self.match_item_menu[self.label_disp_index]['url']
-        
-        self.indicator.set_icon("/home/nishant/workspace/cricket-score-applet/screenshots/"+ icon_name +".png")
+
+        self.indicator.set_icon(path.join(path.abspath(path.curdir), "screenshots", icon_name + ".png"))
 
     def set_submenu_item(self, index , scorecard_text ):
         self.match_item_menu[index]['scorecard'].set_label( scorecard_text)
@@ -210,9 +209,9 @@ class espn_ind:
         self.match_item_menu[index]['gtk_description'].set_label(description_text)
 
     def update_icon(self,index, icon_name):
-        print "here"
+        print "update_icon: \"{icon_name}\"".format(icon_name=icon_name)
         img = Gtk.Image()
-        img.set_from_file("/home/nishant/workspace/cricket-score-applet/screenshots/"+ icon_name +".png")
+        img.set_from_file(path.join(path.abspath(path.curdir), "screenshots", icon_name + ".png"))
         self.match_item_menu[index]['label'].set_image(img)
 
 
@@ -237,10 +236,12 @@ class espn_ind:
                 match_info['match_ball'] = '0'
             self.match_item_menu[j]['match_ball'] = match_info['match_ball']
             print match_info['match_ball']
+            if match_info['match_ball'] == "":
+                match_info['match_ball'] = "label_icon"
             GObject.idle_add(self.update_icon, j , str(match_info['match_ball']))
             GObject.idle_add(self.set_submenu_item , j ,match_info['match_scorecard_summary'])
             GObject.idle_add(self.set_description , j ,match_info['description'])
-            
+
             j += 1
 
         """
