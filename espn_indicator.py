@@ -34,7 +34,7 @@ class espn_ind:
         self.indicator = appindicator.Indicator.new(APP_ID , ICON_PATH , appindicator.IndicatorCategory.APPLICATION_STATUS)
         self.indicator.set_status(appindicator.IndicatorStatus.ACTIVE)
         self.scrap = espn_scrap()
-
+        self.toogle = True
         # create the menu and submenu
         self.label_disp_index = 0
         self.menu_setup()
@@ -76,6 +76,8 @@ class espn_ind:
                                 'gtk_description' : Gtk.MenuItem("Loading"),
                                 'scorecard' : Gtk.MenuItem("Loading"),
                                 'scorecard_text' : "Loading" ,
+                                'gtk_commentary' : Gtk.MenuItem("To be updated"),
+                                'commentary_text' : "To be updated",
             }
 
             self.match_item['show'].connect("activate",self.show_clicked,i)
@@ -84,6 +86,7 @@ class espn_ind:
             self.match_item['submenu'].append(self.match_item['show'])
             self.match_item['submenu'].append(self.match_item['gtk_description'])
             self.match_item['submenu'].append(self.match_item['scorecard'])
+            self.match_item['submenu'].append(self.match_item['gtk_commentary'])
             self.match_item['label'].set_submenu(self.match_item['submenu'])
             img = Gtk.Image()
             img.set_from_file("/home/nishant/workspace/cricket-score-applet/screenshots/six.png")
@@ -97,10 +100,16 @@ class espn_ind:
             self.match_item_menu[i]['gtk_description'].show()
             self.match_item_menu[i]['show'].show()
             self.match_item_menu[i]['scorecard'].show()
-
+            self.match_item_menu[i]['gtk_commentary'].show()
             i += 1
 
         #self.menu.show_all()
+
+        #option to show submenu
+        self.submenu_item = Gtk.MenuItem("Show SubMenu")
+        self.menu.append(self.submenu_item)
+        self.submenu_item.show()
+        self.submenu_item.connect("activate",self.submenu)
 
         # you have to attatch the window in future
         self.preferences_item = Gtk.MenuItem("Preferences <beware its not working>")
@@ -137,6 +146,10 @@ class espn_ind:
         self.label_disp_index = i
         GObject.idle_add(self.set_indicator_status, self.match_item_menu[i]['match_ball'])
 
+    def submenu(self,widget):
+        not self.toogle
+        self.preferences_item.hide()
+
     def update_scores(self):
         while True:
             self.update_labels()
@@ -144,8 +157,9 @@ class espn_ind:
 
     def update_submenu(self):
         while True:
+            time.sleep(REFRESH_TIMEOUT+1)
             self.check_submenu()
-            time.sleep(REFRESH_TIMEOUT)
+            
 
     """
     TODO: complete it
@@ -215,6 +229,8 @@ class espn_ind:
         img.set_from_file("/home/nishant/workspace/cricket-score-applet/screenshots/"+ icon_name +".png")
         self.match_item_menu[index]['label'].set_image(img)
 
+    def set_commentary(self, index, commentary_text):
+        self.match_item_menu[index]['gtk_commentary'].set_label(commentary_text)
 
 
     def  check_submenu(self):
@@ -237,10 +253,15 @@ class espn_ind:
             if( match_info['match_ball'] and match_info['match_ball'] == '&bull;'):
                 match_info['match_ball'] = '0'
             self.match_item_menu[j]['match_ball'] = match_info['match_ball']
-            print match_info['match_ball']
+            #print match_info['match_ball']
+
+            self.match_item_menu[j]['commentary_text'] = match_info['comms']
+
+            
             GObject.idle_add(self.update_icon, j , str(match_info['match_ball']))
             GObject.idle_add(self.set_submenu_item , j ,match_info['match_scorecard_summary'])
             GObject.idle_add(self.set_description , j ,match_info['description'])
+            GObject.idle_add(self.set_commentary, j ,match_info['comms'])
             
             j += 1
 

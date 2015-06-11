@@ -206,75 +206,48 @@ class espn_scrap:
 
             
 
-        self.match[count]['match_scorecard_summary'] = match_summary
-        #print "in espn_scrap"
-        #print self.match[count]['description']
-
-        #print "commentary"
+        print json_data['comms']
+        self.match[count]['comms'] = ""
         match_comm = ""
-        self.match[count]['match_comm'] = ""
-        if(json_data['comms']):
-
-            for x in json_data['comms'][0]['ball']:
-
-                #print x 
-                if 'post_text' in x:
-                    #print x['post_text'].replace(r"<\*>" , "")
-                    #print re.sub(r'<.*?>',"" , x['post_text']).strip().replace('\n', "")
-                    #print "post text"
-                    #print ['post_text']
-                    count = 0
-                    for y in re.sub(r'<p>|</p>',"#" , x['post_text']).split('#'):
-                        #print y 
-                        
-                        if y == "\n":
-                            pass
-                        else:
-                            #print re.sub(r'<b>|</b>', "" , y).lstrip('\n').rstrip('\n')
-                            match_comm += re.sub(r'<b>|</b>', "" , y).lstrip('\n').rstrip('\n')
-                            match_comm += '\n'
-                            count+=1
-
-                        if count == 3:
-                            break
-                    
-                if 'pre_text' in x:
-
-                    #print re.sub(r'<p>|</p>',"#" , x['pre_text']).split('#')
-                    #print "pre_text"
-                    #print
-                    #print
-                    count = 0
-                    for y in re.sub(r'<p>|</p>',"#" , x['pre_text']).split('#'):
-                        #print y 
-                        
-                        if y == "\n":
-                            pass
-                        else:
-                            #print re.sub(r'<b>|</b>', "" , y).lstrip('\n').rstrip('\n')
-                            match_comm += re.sub(r'<b>|</b>', "" , y).lstrip('\n').rstrip('\n')
-                            match_comm += '\n'
-                            count+=1
-
-                        if count == 1:
-                            break
-                    #print x['pre_text']
-
+        for x in json_data['comms'][0]['ball']:
+            if ('event' in x):
+                
+                
+                
                 if ('event' in x):
                     if(x['event'] == "OUT"):
                         x['dismissal'] = " : " + x['dismissal']
                         pass
-                    x['text'] = " : " + x['text']
-                    #print 'commentary'
-                    #print x['overs_actual'] + " "  + x['players'] + " : " + " " +  x['event'] + x['dismissal']  +x['text']
-                    match_comm += (x['overs_actual'] + " "  + x['players'] + " : " + " " +  x['event'] + x['dismissal']  +x['text']).rstrip()
-                    match_comm += '\n'
+                    if(x['text']):
+                        x['text'] = " : " + x['text']
+                        if( len(x['text']) >= 44 ):
+                            t = x['text'].split(",")
+                            x['text'] = ""
+                            x['text'] += t[0]
+                            x['text'] += "\n"
+                            x['text'] += t[1].lstrip()
+                
+                #print 'commentary'
+                #print x['overs_actual'] + " "  + x['players'] + " : " + " " +  x['event'] + x['dismissal']  +x['text']
+                match_comm += (x['overs_actual'] + " "  + x['players'] + " : " + " " +  x['event'] + x['dismissal']  +x['text']).rstrip()
+                match_comm += '\n'
+            
 
-        self.match[count]['match_comm'] = match_comm
+
+
+        self.match[count]['comms'] = match_comm
+    
+        #self.match[count]['comms'] = json_data['comms']
+
+        self.match[count]['match_scorecard_summary'] = match_summary
+        print "in espn_scrap"
+        print self.match[count]['description']
+
         
-
-
-
-
+        print self.match[count]
+        
+        print self.match[count]['description']
+        print "in espn_scrap"
+        print self.match[count].keys()
         print self.match[count]
         return self.match[count]
