@@ -94,7 +94,7 @@ class espn_ind:
             self.match_item_menu.append(self.match_item)
 
             self.match_item_menu[i]['label'].show()
-            #self.match_item_menu[i]['gtk_description'].show()
+            self.match_item_menu[i]['gtk_description'].show()
             self.match_item_menu[i]['show'].show()
             self.match_item_menu[i]['scorecard'].show()
 
@@ -135,7 +135,7 @@ class espn_ind:
 
     def show_clicked(self,widget, i):
         self.label_disp_index = i
-        GObject.idle_add(self.set_indicator_status)
+        GObject.idle_add(self.set_indicator_status, self.match_item_menu[i]['match_ball'])
 
     def update_scores(self):
         while True:
@@ -230,6 +230,7 @@ class espn_ind:
             url = "http://www.espncricinfo.com/" + match['url'][1:-5] + ".json?xhr=1"
 
             match_info = self.scrap.check_match_summary(url,j)
+            print match_info
             self.match_item_menu[j]['scorecard_text'] = match_info['match_scorecard_summary']
             self.match_item_menu[j]['match_scorecard_summary'] = match_info['match_scorecard_summary']
             self.match_item_menu[j]['description'] = match_info['description']

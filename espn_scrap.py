@@ -5,6 +5,7 @@ Created on 06-Jun-2015
 """
 
 import requests
+import re
 
 SUMMARY_URL = "http://www.espncricinfo.com/netstorage/summary.json"
 
@@ -115,86 +116,165 @@ class espn_scrap:
         for x in json_data['centre']:
             pass
 
-        """
-        for x in json_data['centre']['fow'][0]:
-            #print
-            #print x + ":",
-            #print json_data['centre']['fow'][0][x]
-
-            if(x == 'player'):
-                #print
-                for y in json_data['centre']['fow'][0][x]:
-                    #print
-                    #print "player "
-                    #print y
-                    for z in y:
-                        #print z + ":",
-                        #print y[z]
-        """
-        """
-        if('batting' in  json_data['centre']):
-            for x in json_data['centre']['batting']:
-                ##print "player : "+ str(x)
-                #print
-                for y in x:
-                    #print y + ": ",
-                    #print x[y]
-
-                    match_summary += str(y) + ": " + str(x[y])
-
-        """
         self.match[count]['match_ball'] = ""
         if(json_data['live']['recent_overs']):
             self.match[count]['match_ball'] = json_data['live']['recent_overs'][-1][-1]['ball']
 
         #print "in espn_scrap : " + str(count) + " : " +  json_data['live']['recent_overs'][-1][-1]['ball']
+        """
         self.match[count]['description'] = json_data['description']
+        """
+        self.match[count]['description'] = ""
+        for x in json_data['description'].split(','):
+            #print x
+            
+            if(len(x) >= 44):
+                for y in x.split(':'):
+                    self.match[count]['description'] += y.lstrip() + "\n"
+                self.match[count]['description'] = self.match[count]['description'][:-1]
+
+            else:
+                self.match[count]['description'] += x.lstrip()
+
+
+            self.match[count]['description'] += "\n"
+        
+        self.match[count]['description'] = self.match[count]['description'][:-1]
+        
+
+        """
+            get status and break information
+        """
+
         match_summary += "\n" + str(json_data['live']['status'])
         match_summary += "\n" + str(json_data['live']['break']) + "\n"
 
-        if( 'batting' in json_data['centre']):
-            bat = json_data['centre']['batting']
 
-            match_summary += "\n<b>Batsman\n"
-            for x in bat:
-                """
-                for y in x:
-                    #print y + ": ",
-                    #print x[y]
-                """
+        if(json_data['live']['recent_overs']):
+            match_summary += "\nOver "
+            match_summary += "("+ str(json_data['match']['live_overs_unique']).replace(".0",".") + ") : "
 
-                match_summary +=  "\n" + "name                                   : " + str(x['popular_name'])
-                if(x['live_current_name'] == "striker"):
-                    match_summary += "*"
-                match_summary +=  "\n" + "runs                                      : " + str(x['runs'])
-                match_summary +=  "\n" + "balls                                     : " + str(x['balls_faced'])
-                #match_summary +=  "\n" + "striker/non-striker      : " + str(x['live_current_name'])
-                match_summary +=  "\n" + "out/not out                     : " + str(x['dismissal_name'])
-                match_summary += "\n"
+            for x in json_data['live']['recent_overs'][-1]:
+                match_summary += x['ball'].replace('&bull;', '0')
+                match_summary += x['extras'].replace('&bull;', '0')
+                match_summary += "|"
+            
 
-        if ('bowling' in json_data['centre']):
-            match_summary += "\n\nBowlers\n"
-            bat = json_data['centre']['bowling']
-            for x in bat:
-                """
-                for y in x:
-                    #print y + ": ",
-                    #print x[y]
-                """
+        if(json_data['centre']):
+            if( 'batting' in json_data['centre']):
+                match_summary += "\n\n"
+                
+                bat = json_data['centre']['batting']
 
-                match_summary += "\n" + "name                                  : " + str(x['popular_name'])
-                if x['live_current_name'] == 'current bowler':
-                    match_summary += "*"
-                match_summary += "\n" + "wickets                             : " + str(x['wickets'])
-                match_summary += "\n" + "runs conceded              : " + str(x['conceded'])
-                match_summary += "\n" + "overs bowled                : " + str(x['overs'])
-                match_summary += "\n" + "maiden overs               : " + str(x['maidens'])
-                #match_summary += "\n" + "current/previous   : " + str(x['live_current_name'])
-                match_summary += "\n" + "economy rate               : " + str(x['economy_rate'])
-                match_summary += "\n"
+                match_summary += "Batsman   runs(balls)\n"
+                for x in bat:
+                    
+                    match_summary +=  str(x['popular_name'])
+                    if(x['live_current_name'] == "striker"):
+                        match_summary += "*"
+                    match_summary += "  "
+                    match_summary += str(x['runs'])
+                    match_summary += "("
+                    match_summary += str(x['balls_faced'])
+                    match_summary += ")"
+                    match_summary += "     "
+
+
+
+            
+            if ('bowling' in json_data['centre']):
+                match_summary += "\n\nBowlers:   overs-madeins-runs-wickets   economy-rate"
+                bat = json_data['centre']['bowling']
+                for x in bat:
+                    
+                    match_summary += "\n" +  str(x['popular_name'])
+                    if x['live_current_name'] == 'current bowler':
+                        match_summary += "*"
+                    match_summary += " : "
+                    match_summary +=  str(x['overs']) + "-"
+                    match_summary +=  str(x['maidens']) + "-"
+                    match_summary +=  str(x['conceded']) + "-"
+                    match_summary +=  str(x['wickets']) 
+                    match_summary += "    Econ: " + str(x['economy_rate'])
+                    
+                    
+                    
+                    
+                    #match_summary += "\n" + "current/previous   : " + str(x['live_current_name'])
+                    
+                    match_summary += "\n"
+
+            
 
         self.match[count]['match_scorecard_summary'] = match_summary
         #print "in espn_scrap"
         #print self.match[count]['description']
 
+        #print "commentary"
+        match_comm = ""
+        self.match[count]['match_comm'] = ""
+        if(json_data['comms']):
+
+            for x in json_data['comms'][0]['ball']:
+
+                #print x 
+                if 'post_text' in x:
+                    #print x['post_text'].replace(r"<\*>" , "")
+                    #print re.sub(r'<.*?>',"" , x['post_text']).strip().replace('\n', "")
+                    #print "post text"
+                    #print ['post_text']
+                    count = 0
+                    for y in re.sub(r'<p>|</p>',"#" , x['post_text']).split('#'):
+                        #print y 
+                        
+                        if y == "\n":
+                            pass
+                        else:
+                            #print re.sub(r'<b>|</b>', "" , y).lstrip('\n').rstrip('\n')
+                            match_comm += re.sub(r'<b>|</b>', "" , y).lstrip('\n').rstrip('\n')
+                            match_comm += '\n'
+                            count+=1
+
+                        if count == 3:
+                            break
+                    
+                if 'pre_text' in x:
+
+                    #print re.sub(r'<p>|</p>',"#" , x['pre_text']).split('#')
+                    #print "pre_text"
+                    #print
+                    #print
+                    count = 0
+                    for y in re.sub(r'<p>|</p>',"#" , x['pre_text']).split('#'):
+                        #print y 
+                        
+                        if y == "\n":
+                            pass
+                        else:
+                            #print re.sub(r'<b>|</b>', "" , y).lstrip('\n').rstrip('\n')
+                            match_comm += re.sub(r'<b>|</b>', "" , y).lstrip('\n').rstrip('\n')
+                            match_comm += '\n'
+                            count+=1
+
+                        if count == 1:
+                            break
+                    #print x['pre_text']
+
+                if ('event' in x):
+                    if(x['event'] == "OUT"):
+                        x['dismissal'] = " : " + x['dismissal']
+                        pass
+                    x['text'] = " : " + x['text']
+                    #print 'commentary'
+                    #print x['overs_actual'] + " "  + x['players'] + " : " + " " +  x['event'] + x['dismissal']  +x['text']
+                    match_comm += (x['overs_actual'] + " "  + x['players'] + " : " + " " +  x['event'] + x['dismissal']  +x['text']).rstrip()
+                    match_comm += '\n'
+
+        self.match[count]['match_comm'] = match_comm
+        
+
+
+
+
+        print self.match[count]
         return self.match[count]
