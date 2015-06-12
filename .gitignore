@@ -2,3 +2,4 @@ tags
 *.swp
 *.pyc
 *~
+*.vim

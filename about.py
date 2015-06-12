@@ -1,12 +1,10 @@
-
-
-
-from gi.repository import Gtk 
+from gi.repository import Gtk
 
 class About(Gtk.Window):
     def __init__(self):
         super(About, self).__init__()
-        Gtk.Window.__init__(self,title="About")
+
+        Gtk.Window.__init__(self, title="About")
         Gtk.Window.set_default_size(self,300,150)
         Gtk.Window.set_position(self,Gtk.WindowPosition.CENTER)
 
@@ -23,7 +21,7 @@ class About(Gtk.Window):
         self.add(notify)
         self.add(show_commentry)
         """
-        
+
         hbox = Gtk.Box(orientation = Gtk.Orientation.VERTICAL,spacing=0)
         self.add(hbox)
         made_by = Gtk.Label("\nMade By")
@@ -42,7 +40,7 @@ class About(Gtk.Window):
         """
         grid = Gtk.Grid()
         self.add(grid)
-        
+
         made_by = Gtk.Label("\n\nMade By")
         nishant = Gtk.Label()
         nishant.set_markup("<b>Nishant Kukreja (rubyace71697)</b>")
@@ -55,7 +53,7 @@ class About(Gtk.Window):
         """
 
         self.set_title("Preferences")
-        
+
         btn1 = gtk.Button("Button")
         btn1.set_sensitive(False)
         btn2 = gtk.Button("Button")
@@ -70,15 +68,13 @@ class About(Gtk.Window):
         fixed.put(btn4, 100, 80)
         self.add(fixed)
         #self.show_all()
-        
-        
+
+
         self.connect("destroy",gtk.main_quit)
         self.set_size_request(250,150)
         self.set_position(gtk.WIN_POS_CENTER)
-        
+
         """
     def display(self):
         self.show_all();
         Gtk.main()
-        
-        

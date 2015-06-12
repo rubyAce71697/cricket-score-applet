@@ -1,25 +1,20 @@
-'''
+"""
 Created on 06-Jun-2015
 
 @author: nishant
-'''
+"""
 
 from gi.repository import Gtk , GObject
 from gi.repository import AppIndicator3 as appindicator
-from espn_scrap import espn_scrap
-from about import About
-import urllib2
-from bs4 import BeautifulSoup
+from os import path
 import thread
 import time
 import signal
-import json
-import requests
-from os import path
-import sys
 
-REFRESH_TIMEOUT = 2 # second(s)
-PING_FREQUENCY = 1 # seconds
+from espn_scrap import espn_scrap
+from about import About
+
+REFRESH_TIMEOUT = 5 # second(s)
 APP_ID = "new-espn-indicator"
 ICON_PATH = path.join(path.abspath(path.curdir), "screenshots/1.png")
 
@@ -28,7 +23,7 @@ class espn_ind:
         """
         Initialize appindicator and other menus
         """
-        
+
 
         # initialize the appindicator
         self.indicator = appindicator.Indicator.new(APP_ID , ICON_PATH , appindicator.IndicatorCategory.APPLICATION_STATUS)
@@ -40,7 +35,7 @@ class espn_ind:
         self.menu_setup()
         self.indicator.set_menu(self.menu)
 
-        
+
 
     def menu_setup(self):
         """
@@ -50,25 +45,21 @@ class espn_ind:
         self.menu = Gtk.Menu()
 
 
-        self.match = self.scrap.get_matches_summary()
-        """
-        for x in self.match:
-            print x
-        """
+        matches_summary = self.scrap.get_matches_summary()
         self.match_item_menu = []
 
         i = 0
-        for match_info in self.match:
+        for match_info in matches_summary:
             self.match_item = {}
 
-            
-            
+
+
 
             self.match_item = {
 
-                                'label' : Gtk.ImageMenuItem(Gtk.STOCK_NEW, match_info['match_score_summary']),
-                                'label_text' : match_info['match_score_summary'],
-                                'url' : match_info['match_url'],
+                                'label' : Gtk.ImageMenuItem(Gtk.STOCK_NEW, match_info['score_summary']),
+                                'label_text' : match_info['score_summary'],
+                                'url' : match_info['url'],
                                 'submenu' : Gtk.Menu(),
                                 'show' : Gtk.MenuItem("Set as Label"),
                                 'description' : "Loading",
@@ -170,24 +161,12 @@ class espn_ind:
    """
 
     def update_labels(self):
-        """
-            TODO: make a new function for getting the data
-        """
-        self.match = self.scrap.get_matches_summary()
-        """
-        print
-        print "in espn_indicator.py"
-        print "in update_labels"
-        print "json data"
-        
-        for x in self.match:
-            print x
-        """
+        matches_summary = self.scrap.get_matches_summary()
         j = 0
 
-        for match_info in self.match:
-            self.match_item_menu[j]['label_text'] = str(match_info['match_score_summary'])
-            self.match_item_menu[j]['url'] = match_info['match_url']
+        for match_info in matches_summary:
+            self.match_item_menu[j]['label_text'] = str(match_info['score_summary'])
+            self.match_item_menu[j]['url'] = match_info['url']
 
             GObject.idle_add(self.set_menu_item, j, self.match_item_menu[j]['label_text'])
 
@@ -223,7 +202,12 @@ class espn_ind:
         self.match_item_menu[index]['gtk_description'].set_label(description_text)
 
     def update_icon(self,index, icon_name):
-        print "update_icon: \"{icon_name}\"".format(icon_name=icon_name)
+        if icon_name == "":
+            # TODO: use a better image
+            icon_name = "label_icon"
+
+        #print "update_icon: \"{icon_name}\"".format(icon_name=icon_name)
+
         img = Gtk.Image()
         img.set_from_file(path.join(path.abspath(path.curdir), "screenshots", icon_name + ".png"))
         self.match_item_menu[index]['label'].set_image(img)
@@ -242,26 +226,24 @@ class espn_ind:
         j = 0
 
         for match in self.match_item_menu:
-            url = "http://www.espncricinfo.com/" + match['url'][1:-5] + ".json?xhr=1"
-
-            match_info = self.scrap.check_match_summary(url,j)
-            print match_info
-            self.match_item_menu[j]['scorecard_text'] = match_info['match_scorecard_summary']
-            self.match_item_menu[j]['match_scorecard_summary'] = match_info['match_scorecard_summary']
+            match_info = self.scrap.get_match_data(j)
+            #print match_info
+            self.match_item_menu[j]['scorecard_text'] = match_info['scorecard_summary']
+            self.match_item_menu[j]['scorecard_summary'] = match_info['scorecard_summary']
             self.match_item_menu[j]['description'] = match_info['description']
-            if( match_info['match_ball'] and match_info['match_ball'] == '&bull;'):
-                match_info['match_ball'] = '0'
-            self.match_item_menu[j]['match_ball'] = match_info['match_ball']
+            if( match_info['ball'] and match_info['ball'] == '&bull;'):
+                match_info['ball'] = '0'
+            self.match_item_menu[j]['ball'] = match_info['ball']
             #print match_info['match_ball']
 
             self.match_item_menu[j]['commentary_text'] = match_info['comms']
 
-            
-            GObject.idle_add(self.update_icon, j , str(match_info['match_ball']))
-            GObject.idle_add(self.set_submenu_item , j ,match_info['match_scorecard_summary'])
+
+            GObject.idle_add(self.update_icon, j , str(match_info['ball']))
+            GObject.idle_add(self.set_submenu_item , j ,match_info['scorecard_summary'])
             GObject.idle_add(self.set_description , j ,match_info['description'])
             GObject.idle_add(self.set_commentary, j ,match_info['comms'])
-            
+
             j += 1
 
         """
