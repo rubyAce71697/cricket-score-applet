@@ -63,7 +63,7 @@ class espn_ind:
                                 'submenu' : Gtk.Menu(),
                                 'show' : Gtk.MenuItem("Set as Label"),
                                 'description' : "Loading",
-                                'match_ball' : "Loading",
+                                'ball' : "Loading",
                                 'gtk_description' : Gtk.MenuItem("Loading"),
                                 'scorecard' : Gtk.MenuItem("Loading"),
                                 'scorecard_text' : "Loading" ,
@@ -135,7 +135,7 @@ class espn_ind:
 
     def show_clicked(self,widget, i):
         self.label_disp_index = i
-        GObject.idle_add(self.set_indicator_status, self.match_item_menu[i]['match_ball'])
+        GObject.idle_add(self.set_indicator_status, self.match_item_menu[i]['ball'])
 
     def submenu(self,widget):
         not self.toogle
@@ -172,7 +172,7 @@ class espn_ind:
 
             # update the indicaror status
             if j == self.label_disp_index :
-                GObject.idle_add(self.set_indicator_status , self.match_item_menu[j]['match_ball'])
+                GObject.idle_add(self.set_indicator_status , self.match_item_menu[j]['ball'])
 
             j += 1
 
@@ -193,6 +193,7 @@ class espn_ind:
         self.indicator.set_label(self.match_item_menu[self.label_disp_index]["label_text"],"")
         print self.match_item_menu[self.label_disp_index]['url']
 
+        print "set_indicator_status: icon_name:", icon_name
         self.indicator.set_icon(path.join(path.abspath(path.curdir), "screenshots", icon_name + ".png"))
 
     def set_submenu_item(self, index , scorecard_text ):
@@ -234,7 +235,6 @@ class espn_ind:
             if( match_info['ball'] and match_info['ball'] == '&bull;'):
                 match_info['ball'] = '0'
             self.match_item_menu[j]['ball'] = match_info['ball']
-            #print match_info['match_ball']
 
             self.match_item_menu[j]['commentary_text'] = match_info['comms']
 

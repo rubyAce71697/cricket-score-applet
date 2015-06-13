@@ -38,7 +38,7 @@ class espn_scrap:
                 'description':       'No description available',
                 'ball':              'No description available',
                 'scorecard_summary': 'No summary available',
-                'url':               'http://127.0.0.1',
+                'url':               'http://0.0.0.0',
                 }
 
         # set the parameters which will be sent with each request
@@ -55,7 +55,6 @@ class espn_scrap:
         Data fields returned by summary.json:
             live_match,     // "Y"/"N" flag
             description,    //info about match
-            match_ball,     // ???
             match_clock,    // time duration from start
             url,            // wrt espncricinfo.com
             result,
@@ -71,10 +70,15 @@ class espn_scrap:
             all_matches = (requests.get(SUMMARY_URL)).json()['matches']
         except Exception as err:
             print ('Exception: ', err)
-            # NOTE: consider returning the old self.match if it isn't empty
-            return [self.dummy_match_info]
+            offline = True
+            if self.match == []:
+                return [self.dummy_match_info]
+            else:
+                return self.match
 
+        offline = False
         self.match = []
+        # NOTE: if get_match_data is called at this point, then we're in trouble
         for i in all_matches:
             # TODO: consider using match_clock if startstring is not available
             summary_text = "{team1}{team1score} vs {team2}{team2score} {startstring}".format(
@@ -100,9 +104,14 @@ class espn_scrap:
             json_data = (requests.get(MATCH_URL(self.match[index]['url']), headers = self.requestParam)).json()
         except Exception as err:
             print ('Exception: ', err)
+            offline = True
             # TODO: send a more "appropriate" object;
-            return self.dummy_match_info
+            if self.match == [] or len(self.match) < index:
+                return self.dummy_match_info
+            else:
+                return self.match[index]
 
+        offline = False
         match_summary = ""
 
         self.match[index]['ball'] = ""
