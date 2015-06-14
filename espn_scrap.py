@@ -12,6 +12,7 @@ MATCH_URL = lambda match_url: BASE_URL + match_url[:-5] + ".json"
 
 class espn_scrap:
     def __init__(self):
+        self.offline = True
         # for maintaing list of matches, an array of "match_info"
         self.match = []
         """
@@ -19,43 +20,53 @@ class espn_scrap:
 
             "match_info" will contain following fields:
 
-            score_summary {
-                eg: "Kent - 73/2 (9.2/20 ov) vs Gloucs"
-            }
+            score_summary:
+                e.g. "Kent - 73/2 (9.2/20 ov) vs Gloucs"
 
-            scorecard_summary {
+            scorecard_summary:
                 can be empty as only international matches return 'centre'
-                will be scrapping more later
-            }
 
-            url {
-                url is of json
-                eg: "http://www.espncricinfo.com/natwest-t20-blast-2015/engine/match/804513.json"
-            }
+            url:
+                url of match
+                e.g. "http://www.espncricinfo.com/natwest-t20-blast-2015/engine/match/804513.html"
+
+            ball:
+                result of the most recent ball
+                e.g. '1', 'W', '0' etc.
+
+            description:
+                description of current match
+                e.g. "India tour of Bangladesh, Only Test: Bangladesh v India at Fatullah, Jun 10-14, 2015"
+
+            comms:
+                live commentary text
+                TODO
         """
         self.dummy_match_info = {
+                # TODO: use more sensible defaults such that checking for offline/online mode is easy
                 'score_summary':     'No data available: check networking settings',
-                'description':       'No description available',
-                'ball':              'No description available',
-                'scorecard_summary': 'No summary available',
-                'url':               'http://127.0.0.1',
+                'scorecard_summary': 'Not available',
+                'url':               'http://0.0.0.0',
+                'ball':              'Not available',
+                'description':       'Not available',
+                'comms':             'Not available',
                 }
 
         # set the parameters which will be sent with each request
-        self.requestParam                    = {}
-        self.requestParam['Host']            = "www.espncricinfo.com"
-        self.requestParam['User-Agent']      = "Mozilla/5.0 (X11; Ubuntu; Linux) Firefox"
-        self.requestParam['Accept']          = "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
-        self.requestParam['Accept-Encoding'] = "gzip,deflate"
-        self.requestParam['Cookie']          = ""
-        self.requestParam['Connection']      = "keep-alive"
-        self.requestParam['Cache-Control']   = "max-age=0"
+        self.requestParam = {
+                'Host':            "www.espncricinfo.com",
+                'User-Agent':      "Mozilla/5.0 (X11; Linux) Firefox",
+                'Accept':          "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                'Accept-Encoding': "gzip,deflate",
+                'Cookie':          "",
+                'Connection':      "keep-alive",
+                'Cache-Control':   "max-age=0",
+                }
 
         """
         Data fields returned by summary.json:
             live_match,     // "Y"/"N" flag
             description,    //info about match
-            match_ball,     // ???
             match_clock,    // time duration from start
             url,            // wrt espncricinfo.com
             result,
@@ -66,29 +77,41 @@ class espn_scrap:
         NOTE: incomplete list
         """
 
+    def is_offline(self):
+        return self.offline
+
     def get_matches_summary(self):
         try:
             all_matches = (requests.get(SUMMARY_URL)).json()['matches']
         except Exception as err:
             print ('Exception: ', err)
-            # NOTE: consider returning the old self.match if it isn't empty
-            return [self.dummy_match_info]
+            self.offline = True
+            if self.match == []:
+                return [self.dummy_match_info]
+            else:
+                return self.match
 
+        self.offline = False
         self.match = []
+        # NOTE: if get_match_data is called at this point, then we're in trouble
         for i in all_matches:
             # TODO: consider using match_clock if startstring is not available
             summary_text = "{team1}{team1score} vs {team2}{team2score} {startstring}".format(
                 team1       = all_matches[i]['team1_name'].strip().replace('&nbsp;', ' '),
-                team1score  = (' - ' + all_matches[i]['team1_score'].strip().replace('&nbsp;', ' ').replace('&amp;', '&')) if all_matches[i]['team1_score'].strip() else '',
+                team1score  = (' - ' + all_matches[i]['team1_score'].strip().replace('&nbsp;', ' ').replace('&amp;', '&'))\
+                                if all_matches[i]['team1_score'].strip() else '',
                 team2       = all_matches[i]['team2_name'].strip().replace('&nbsp;',  ' '),
-                team2score  = (' - ' + all_matches[i]['team2_score'].strip().replace('&nbsp;', ' ').replace('&amp;', '&')) if all_matches[i]['team2_score'].strip() else '',
-                startstring = (' - ' + all_matches[i]['start_string'].strip().replace('&nbsp;', ' ')) if 'start_string' in all_matches[i] else ''
+                team2score  = (' - ' + all_matches[i]['team2_score'].strip().replace('&nbsp;', ' ').replace('&amp;', '&'))\
+                                if all_matches[i]['team2_score'].strip() else '',
+                startstring = (' - ' + all_matches[i]['start_string'].strip().replace('&nbsp;', ' '))\
+                                if 'start_string' in all_matches[i] else ''
                 )
 
             match_info = {
                     'url':               all_matches[i]['url'],
                     'score_summary':     summary_text,
                     'scorecard_summary': 'Loading'
+                    # NOTE: should we add more fields so that accessing them doesn't cause "KeyError"?
                     }
 
             self.match.append(match_info)
@@ -100,86 +123,80 @@ class espn_scrap:
             json_data = (requests.get(MATCH_URL(self.match[index]['url']), headers = self.requestParam)).json()
         except Exception as err:
             print ('Exception: ', err)
-            # TODO: send a more "appropriate" object;
-            return self.dummy_match_info
+            self.offline = True
+            if self.match == [] or len(self.match) < index:
+                return self.dummy_match_info
+            else:
+                return self.match[index]
 
-        match_summary = ""
+        self.offline = False
 
-        self.match[index]['ball'] = ""
-        if(json_data['live']['recent_overs']):
-            self.match[index]['ball'] = json_data['live']['recent_overs'][-1][-1]['ball']
+        self.match[index]['ball'] = ''
+        if json_data['live']['recent_overs']:
+            self.match[index]['ball'] = (json_data['live']['recent_overs'][-1][-1]['ball']).replace('&bull;', '0')
 
+        self.match[index]['description'] = ''
         """
-        self.match[index]['description'] = json_data['description']
+        Review the code below; What are assumptions for selecting (or splitting) parts of 'description'?
+        TODO: refactor the code; replace loops with loop comprehensions
         """
-        self.match[index]['description'] = ""
+        """
+        split description into parts.
+        e.g. "India tour of Bangladesh, Only Test: Bangladesh v India at Fatullah, Jun 10-14, 2015"
+        will become:
+            India tour of Bangladesh
+            Only Test
+            Bangladesh v India at Fatullah
+            Jun 10-14
+            2015
+        NOTE: Is the format consistent? If yes, then we can avoid splitting date, it looks a bit odd.
+        """
         for x in json_data['description'].split(','):
-            if(len(x) >= 44):
+            if len(x) >= 44:    # why 44?
                 for y in x.split(':'):
                     self.match[index]['description'] += y.lstrip() + "\n"
-                self.match[index]['description'] = self.match[index]['description'][:-1]
-
+                self.match[index]['description'] = self.match[index]['description'][:-1]    # for removing '\n'
             else:
                 self.match[index]['description'] += x.lstrip()
-
             self.match[index]['description'] += "\n"
 
         self.match[index]['description'] = self.match[index]['description'][:-1]
 
 
-        """
-            get status and break information
-        """
+        match_summary = "\n" + json_data['live']['status'] + "\n" +\
+                        (json_data['live']['break'] + "\n" if json_data['live']['break'] != "" else "")
 
-        match_summary += "\n" + str(json_data['live']['status'])
-        match_summary += "\n" + str(json_data['live']['break']) + "\n"
+        if json_data['live']['recent_overs']:
+            match_summary += "\nOver " +\
+                             "(" + json_data['match']['live_overs_unique'].replace(".0",".") + ")"   # 'live_overs_unique' returns something like 50.03. so we need to strip the extra '0'
+                             # NOTE: 'live_overs_unique' doesn't seems to be giving corrent value in case of domestic matches
+            match_summary += ": " + " | ".join([ x['ball'].replace('&bull;', '0') +\
+                                                 x['extras'].replace('&bull;', '0')  for x in json_data['live']['recent_overs'][-1]])
 
-        if(json_data['live']['recent_overs']):
-            match_summary += "\nOver "
-            match_summary += "("+ str(json_data['match']['live_overs_unique']).replace(".0",".") + ") : "
+        if json_data['centre']:
+            # NOTE: the formatting work here assumes *monotype* fonts, hence doesn't work for proportionated fonts :(
+            # TODO: figure out a better method (tabular?) for displaying this data
+            if json_data['centre']['batting']:
+                match_summary += "\n\nBatsman:   runs (balls)\n" +\
+                                 "\n".join([ "{player_name:<12} {runs:>4} ({balls:^5})".format( \
+                                                    player_name = x['popular_name'] + ("*" if x['live_current_name'] == "striker" else ""),
+                                                    runs        = x['runs'],
+                                                    balls       = x['balls_faced']
+                                            ) for x in json_data['centre']['batting']])
 
-            for x in json_data['live']['recent_overs'][-1]:
-                match_summary += x['ball'].replace('&bull;', '0')
-                match_summary += x['extras'].replace('&bull;', '0')
-                match_summary += "|"
+            if json_data['centre']['bowling']:
+                match_summary += "\n\nBowlers:   overs-maidens-runs-wickets  economy-rate\n" +\
+                                 "\n".join([ "{player_name:<12} {overs} - {maidens} - {runs} - {wickets}  {economy}".format( \
+                                                    player_name = x['popular_name'] + ("*" if x['live_current_name'] == "current bowler" else ""),
+                                                    overs       = x['overs'],
+                                                    maidens     = x['maidens'],
+                                                    runs        = x['conceded'],
+                                                    wickets     = x['wickets'],
+                                                    economy     = x['economy_rate']
+                                            ) for x in json_data['centre']['bowling']])
 
+        self.match[index]['scorecard_summary'] = match_summary
 
-        if(json_data['centre']):
-            if( 'batting' in json_data['centre']):
-                match_summary += "\n\n"
-
-                bat = json_data['centre']['batting']
-
-                match_summary += "Batsman   runs(balls)\n"
-                for x in bat:
-
-                    match_summary +=  str(x['popular_name'])
-                    if(x['live_current_name'] == "striker"):
-                        match_summary += "*"
-                    match_summary += "  "
-                    match_summary += str(x['runs'])
-                    match_summary += "("
-                    match_summary += str(x['balls_faced'])
-                    match_summary += ")"
-                    match_summary += "     "
-
-            if ('bowling' in json_data['centre']):
-                match_summary += "\n\nBowlers:   overs-madeins-runs-wickets   economy-rate"
-                bat = json_data['centre']['bowling']
-                for x in bat:
-                    match_summary += "\n" +  str(x['popular_name'])
-                    if x['live_current_name'] == 'current bowler':
-                        match_summary += "*"
-                    match_summary += " : "
-                    match_summary +=  str(x['overs']) + "-"
-                    match_summary +=  str(x['maidens']) + "-"
-                    match_summary +=  str(x['conceded']) + "-"
-                    match_summary +=  str(x['wickets'])
-                    match_summary += "    Econ: " + str(x['economy_rate'])
-                    #match_summary += "\n" + "current/previous   : " + str(x['live_current_name'])
-                    match_summary += "\n"
-
-        #print json_data['comms']
         self.match[index]['comms'] = ""
         # NOTE: 'comms' field is not available in domestic matches, check before use
         #match_comm = ""
@@ -203,7 +220,5 @@ class espn_scrap:
         #        match_comm += '\n'
 
         #self.match[index]['comms'] = match_comm
-
-        self.match[index]['scorecard_summary'] = match_summary
 
         return self.match[index]
