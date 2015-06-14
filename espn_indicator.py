@@ -232,8 +232,6 @@ class espn_ind:
             self.match_item_menu[j]['scorecard_text'] = match_info['scorecard_summary']
             self.match_item_menu[j]['scorecard_summary'] = match_info['scorecard_summary']
             self.match_item_menu[j]['description'] = match_info['description']
-            if( match_info['ball'] and match_info['ball'] == '&bull;'):
-                match_info['ball'] = '0'
             self.match_item_menu[j]['ball'] = match_info['ball']
 
             self.match_item_menu[j]['commentary_text'] = match_info['comms']
