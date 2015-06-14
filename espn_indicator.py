@@ -16,7 +16,7 @@ from about import About
 
 REFRESH_TIMEOUT = 2 # second(s)
 APP_ID = "new-espn-indicator"
-ICON_PATH = path.join(path.abspath(path.curdir), "screenshots/check.png")
+ICON_PATH = path.join(path.abspath(path.curdir), "screenshots/label_536.png")
 
 class espn_ind:
     def __init__(self):
@@ -69,6 +69,7 @@ class espn_ind:
                                 'scorecard_text' : "Loading" ,
                                 'gtk_commentary' : Gtk.MenuItem("To be updated"),
                                 'commentary_text' : "To be updated",
+                                
             }
 
             self.match_item['show'].connect("activate",self.show_clicked,i)
@@ -80,7 +81,7 @@ class espn_ind:
             self.match_item['submenu'].append(self.match_item['gtk_commentary'])
             self.match_item['label'].set_submenu(self.match_item['submenu'])
             img = Gtk.Image()
-            img.set_from_file(path.join(path.abspath(path.curdir), "screenshots/six.png"))
+            img.set_from_file(path.join(path.abspath(path.curdir), "screenshots/label_536.png"))
             self.match_item['label'].set_image(img)
             self.match_item['label'].set_always_show_image(True)
 
@@ -232,12 +233,13 @@ class espn_ind:
     def update_icon(self,index, icon_name):
         if icon_name == "":
             # TODO: use a better image
-            icon_name = "label_icon"
+            icon_name = "label_536"
 
         #print "update_icon: \"{icon_name}\"".format(icon_name=icon_name)
 
         img = Gtk.Image()
         img.set_from_file(path.join(path.abspath(path.curdir), "screenshots", icon_name + ".png"))
+        print icon_name
         self.match_item_menu[index]['label'].set_image(img)
 
     def set_commentary(self, index, commentary_text):

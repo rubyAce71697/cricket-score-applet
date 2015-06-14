@@ -96,11 +96,11 @@ class espn_scrap:
         # NOTE: if get_match_data is called at this point, then we're in trouble
         for i in all_matches:
             # TODO: consider using match_clock if startstring is not available
-            summary_text = "{team1}{team1score} vs {team2}{team2score} {startstring}".format(
-                team1       = all_matches[i]['team1_name'].strip().replace('&nbsp;', ' '),
+            summary_text = "{team1_abbrev}{team1score} vs {team2_abbrev}{team2score} {startstring}".format(
+                team1_abbrev       = all_matches[i]['team1_abbrev'].strip().replace('&nbsp;', ' '),
                 team1score  = (' - ' + all_matches[i]['team1_score'].strip().replace('&nbsp;', ' ').replace('&amp;', '&'))\
                                 if all_matches[i]['team1_score'].strip() else '',
-                team2       = all_matches[i]['team2_name'].strip().replace('&nbsp;',  ' '),
+                team2_abbrev       = all_matches[i]['team2_abbrev'].strip().replace('&nbsp;',  ' '),
                 team2score  = (' - ' + all_matches[i]['team2_score'].strip().replace('&nbsp;', ' ').replace('&amp;', '&'))\
                                 if all_matches[i]['team2_score'].strip() else '',
                 startstring = (' - ' + all_matches[i]['start_string'].strip().replace('&nbsp;', ' '))\
