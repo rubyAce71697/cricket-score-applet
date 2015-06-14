@@ -14,9 +14,9 @@ import signal
 from espn_scrap import espn_scrap
 from about import About
 
-REFRESH_TIMEOUT = 5 # second(s)
+REFRESH_TIMEOUT = 2 # second(s)
 APP_ID = "new-espn-indicator"
-ICON_PATH = path.join(path.abspath(path.curdir), "screenshots/1.png")
+ICON_PATH = path.join(path.abspath(path.curdir), "screenshots/check.png")
 
 class espn_ind:
     def __init__(self):
@@ -97,10 +97,12 @@ class espn_ind:
         #self.menu.show_all()
 
         #option to show submenu
-        self.submenu_item = Gtk.MenuItem("Show SubMenu")
+        self.submenu_item = Gtk.MenuItem("Hide SubMenu")
+
         self.menu.append(self.submenu_item)
         self.submenu_item.show()
-        self.submenu_item.connect("activate",self.submenu)
+        
+        self.submenu_item.connect("activate",self.set_submenu_visibile)
 
         # you have to attatch the window in future
         self.preferences_item = Gtk.MenuItem("Preferences <beware its not working>")
@@ -137,9 +139,34 @@ class espn_ind:
         self.label_disp_index = i
         GObject.idle_add(self.set_indicator_status, self.match_item_menu[i]['ball'])
 
-    def submenu(self,widget):
-        not self.toogle
-        self.preferences_item.hide()
+    def set_submenu_visibile(self,widget):
+        self.toogle = not self.toogle
+        if(self.toogle):
+            self.preferences_item.show()
+            for match in self.match_item_menu:
+                match['gtk_description'].show()
+                match['gtk_commentary'].show()
+                match['scorecard'].show()
+
+            self.submenu_item.set_label("Hide Submenu")
+            print self.toogle
+        else:
+            self.preferences_item.hide()
+            for match in self.match_item_menu:
+                match['gtk_description'].hide()
+                match['gtk_commentary'].hide()
+                match['scorecard'].hide()
+
+            self.submenu_item.set_label("Show Submenu")
+                
+            print self.toogle
+
+        
+
+
+    
+
+
 
     def update_scores(self):
         while True:
