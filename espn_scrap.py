@@ -102,7 +102,15 @@ class espn_scrap:
         self.offline = False
         self.match = []
         # NOTE: if get_match_data is called at this point, then we're in trouble
-        intl = summary['modules']['www'][0]['matches']
+        #intl = summary['modules']['www'][0]['matches']
+        #intl = [x for x in summary['modules']['www'][0] if x['category'] == 'intl']
+        intl = []
+        for x in summary['modules']['www']:
+            if x['category'] == 'intl':
+                for y in x['matches']:
+                    intl.append(y)
+
+
         all_matches = summary['matches']
 
         for i in all_matches:
