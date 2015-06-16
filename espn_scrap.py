@@ -50,6 +50,7 @@ class espn_scrap:
                 'ball':              'Not available',
                 'description':       'Not available',
                 'comms':             'Not available',
+                'international':     'Not available',
                 }
 
         # set the parameters which will be sent with each request
@@ -82,7 +83,8 @@ class espn_scrap:
 
     def get_matches_summary(self):
         try:
-            all_matches = (requests.get(SUMMARY_URL)).json()['matches']
+            
+            all_matches = (requests.get(SUMMARY_URL)).json()
         except Exception as err:
             print ('Exception: ', err)
             self.offline = True
@@ -94,32 +96,56 @@ class espn_scrap:
         self.offline = False
         self.match = []
         # NOTE: if get_match_data is called at this point, then we're in trouble
-        for i in all_matches:
+        intl = []
+        dom = []
+        """
+        for x in all_matches['modules']['ind']:
+                #print x
+                if x['category'] == 'dom':
+                    for dom_matches in x['submenu']:
+                        dom.append(dom_matches['matches'])
+                else:
+                    for int_matches in x['matches']:
+                        intl.append(intl_matches)
+        """
+
+        for i in all_matches['matches']:
             # TODO: consider using match_clock if startstring is not available
             summary_text = "{team1_abbrev}{team1score} vs {team2_abbrev}{team2score} {startstring}".format(
-                team1_abbrev       = all_matches[i]['team1_abbrev'].strip().replace('&nbsp;', ' '),
-                team1score  = (' - ' + all_matches[i]['team1_score'].strip().replace('&nbsp;', ' ').replace('&amp;', '&'))\
-                                if all_matches[i]['team1_score'].strip() else '',
-                team2_abbrev       = all_matches[i]['team2_abbrev'].strip().replace('&nbsp;',  ' '),
-                team2score  = (' - ' + all_matches[i]['team2_score'].strip().replace('&nbsp;', ' ').replace('&amp;', '&'))\
-                                if all_matches[i]['team2_score'].strip() else '',
-                startstring = (' - ' + all_matches[i]['start_string'].strip().replace('&nbsp;', ' '))\
-                                if 'start_string' in all_matches[i] else ''
+                team1_abbrev       = all_matches['matches'][i]['team1_abbrev'].strip().replace('&nbsp;', ' '),
+                team1score  = (' - ' + all_matches['matches'][i]['team1_score'].strip().replace('&nbsp;', ' ').replace('&amp;', '&'))\
+                                if all_matches['matches'][i]['team1_score'].strip() else '',
+                team2_abbrev       = all_matches['matches'][i]['team2_abbrev'].strip().replace('&nbsp;',  ' '),
+                team2score  = (' - ' + all_matches['matches'][i]['team2_score'].strip().replace('&nbsp;', ' ').replace('&amp;', '&'))\
+                                if all_matches['matches'][i]['team2_score'].strip() else '',
+                startstring = (' - ' + all_matches['matches'][i]['start_string'].strip().replace('&nbsp;', ' '))\
+                                if 'start_string' in all_matches['matches'][i] else ''
                 )
 
             match_info = {
-                    'url':               all_matches[i]['url'],
+                    'id':                i,
+                    'url':               all_matches['matches'][i]['url'],
                     'score_summary':     summary_text,
-                    'scorecard_summary': 'Loading'
+                    'scorecard_summary': 'Loading',
                     # NOTE: should we add more fields so that accessing them doesn't cause "KeyError"?
+                    'international':      0,
+                    'ball': ""
                     }
+            if intl != []:
+
+                if i in intl_list:
+                    match_info['international'] = 1        
 
             self.match.append(match_info)
+
+
 
         return self.match
 
     def get_match_data(self, index):
         try:
+            #print index
+            #print self.match[index]['url']
             json_data = (requests.get(MATCH_URL(self.match[index]['url']), headers = self.requestParam)).json()
         except Exception as err:
             print ('Exception: ', err)

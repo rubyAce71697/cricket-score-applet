@@ -31,7 +31,8 @@ class espn_ind:
         self.scrap = espn_scrap()
         self.toogle = True
         # create the menu and submenu
-        self.label_disp_index = 0
+        self.label_disp_index = 1
+        self.label_clas = 0
         self.menu_setup()
         self.indicator.set_menu(self.menu)
 
@@ -46,7 +47,18 @@ class espn_ind:
 
 
         matches_summary = self.scrap.get_matches_summary()
-        self.match_item_menu = []
+        self.match_menu = []
+        self.intl_menu = []
+        self.intl_menu.append({ 'label' : Gtk.MenuItem(u"INTERNATIONAL"),
+        'label_text': u"\u0049nternational", })
+        self.intl_menu[0]['label'].set_sensitive(False)
+        
+        self.dom_menu = []
+        self.dom_menu.append({'label' : Gtk.MenuItem("DOMESTIC"),
+        'label_text': "DOMESTIC", })
+        self.dom_menu[0]['label'].set_sensitive(False)
+        intl = 1
+        dom = 1
 
         i = 0
         for match_info in matches_summary:
@@ -70,11 +82,17 @@ class espn_ind:
                                 'gtk_commentary' : Gtk.MenuItem("To be updated"),
                                 'commentary_text' : "To be updated",
                                 
+                                'international' : match_info['international'],
+                                
+                                
             }
+            
+            
+            self.match_item['show'].connect("activate",self.show_clicked,match_info['international'],intl,dom, match_info['ball'])
+            
 
-            self.match_item['show'].connect("activate",self.show_clicked,i)
             self.match_item['scorecard'].set_sensitive(False)
-            self.menu.append(self.match_item['label'])
+            #self.menu.append(self.match_item['label'])
             self.match_item['submenu'].append(self.match_item['show'])
             self.match_item['submenu'].append(self.match_item['gtk_description'])
             self.match_item['submenu'].append(self.match_item['scorecard'])
@@ -86,16 +104,39 @@ class espn_ind:
             self.match_item['label'].set_always_show_image(True)
 
             # make a list to keep them all togther
-            self.match_item_menu.append(self.match_item)
-
-            self.match_item_menu[i]['label'].show()
-            self.match_item_menu[i]['gtk_description'].show()
-            self.match_item_menu[i]['show'].show()
-            self.match_item_menu[i]['scorecard'].show()
-            self.match_item_menu[i]['gtk_commentary'].show()
+            ##self.match_menu.append(self.match_item)
+            
+            if(match_info['international']):
+                self.intl_menu.append(self.match_item)
+                intl+=1
+            else:
+                self.dom_menu.append(self.match_item)
+                dom+=1
+            
             i += 1
 
-        #self.menu.show_all()
+        print "intl menu"
+        self.match_menu.append(self.dom_menu)
+        self.match_menu.append(self.intl_menu)
+        
+        self.intl_menu[0]['label'].show()
+        self.dom_menu[0]['label'].show()
+        for x in self.match_menu:
+            for y in x :
+                self.menu.append(y['label'])
+                
+            
+        #print self.match_menu
+        self.menu.show_all()
+        
+
+
+
+        #-----------------------------------------------------------------------------------------------------
+
+
+
+
 
         #option to show submenu
         self.submenu_item = Gtk.MenuItem("Hide SubMenu")
@@ -105,7 +146,7 @@ class espn_ind:
         
         self.submenu_item.connect("activate",self.set_submenu_visibile)
 
-        # you have to attatch the window in future
+        #you have to attatch the window in future
         self.preferences_item = Gtk.MenuItem("Preferences <beware its not working>")
         self.menu.append(self.preferences_item)
         self.preferences_item.show()
@@ -115,7 +156,7 @@ class espn_ind:
         self.about_item.show()
         self.about_item.connect("activate",self.about)
 
-        # we need a way to quit if the indicator is irritating ;)
+        #we need a way to quit if the indicator is irritating ;)
         self.quit_item = Gtk.MenuItem("Quit")
         self.quit_item.connect("activate", self.quit)
 
@@ -136,32 +177,39 @@ class espn_ind:
     def about(self,widget):
     	About().display()
 
-    def show_clicked(self,widget, i):
-        self.label_disp_index = i
-        GObject.idle_add(self.set_indicator_status, self.match_item_menu[i]['ball'])
-
+    def show_clicked(self,widget, clas, intl, dom, icon_name):
+        if clas:
+            self.label_disp_index = intl
+        else:
+            self.label_disp_index = dom
+        
+        GObject.idle_add(self.set_indicator_status,clas, icon_name)
+        
     def set_submenu_visibile(self,widget):
         self.toogle = not self.toogle
         if(self.toogle):
             self.preferences_item.show()
-            for match in self.match_item_menu:
-                match['gtk_description'].show()
-                match['gtk_commentary'].show()
-                match['scorecard'].show()
+            for match in self.match_menu:
+                for category_match in match:
+                    if 'submenu' in category_match:
+                        category_match['gtk_description'].show()
+                        category_match['gtk_commentary'].show()
+                        category_match['scorecard'].show()
 
             self.submenu_item.set_label("Hide Submenu")
             print self.toogle
         else:
             self.preferences_item.hide()
-            for match in self.match_item_menu:
-                match['gtk_description'].hide()
-                match['gtk_commentary'].hide()
-                match['scorecard'].hide()
+            for match in self.match_menu:
+                for category_match in match:
+                    if 'submenu' in category_match:
+                        category_match['gtk_description'].hide()
+                        category_match['gtk_commentary'].hide()
+                        category_match['scorecard'].hide()
 
             self.submenu_item.set_label("Show Submenu")
                 
-            print self.toogle
-
+        
         
 
 
@@ -179,58 +227,70 @@ class espn_ind:
             self.check_submenu()
             time.sleep(REFRESH_TIMEOUT)
 
-    """
-    TODO: complete it
-
-    def update_scorecard(self):
-        while True:
-            update_scorecard_labels()
-            time.sleep(REFRESH_TIMEOUT-4)
-   """
 
     def update_labels(self):
         matches_summary = self.scrap.get_matches_summary()
         j = 0
+        dom = 1
+        intl = 1
+        clas = ""
 
         for match_info in matches_summary:
-            self.match_item_menu[j]['label_text'] = str(match_info['score_summary'])
-            self.match_item_menu[j]['url'] = match_info['url']
-
-            GObject.idle_add(self.set_menu_item, j, self.match_item_menu[j]['label_text'])
-
+            
             # update the indicaror status
-            if j == self.label_disp_index :
-                GObject.idle_add(self.set_indicator_status , self.match_item_menu[j]['ball'])
+            
+            if match_info['international']:
+                self.intl_menu[intl]['label_text']= str(match_info['score_summary'])
+                self.intl_menu[intl]['url'] = match_info['url']
+                self.intl_menu[intl]['international'] = match_info['international']
+                clas = 1
+                
+                GObject.idle_add(self.set_menu_item, clas,intl, match_info['score_summary'])
+                
+                
+                if intl == self.label_disp_index and self.label_clas == clas:
+                    GObject.idle_add(self.set_indicator_status , clas , self.intl_menu[intl]['ball'])
+                
+                intl += 1
+            else:
+                self.dom_menu[dom]['label_text'] = str(match_info['score_summary'])
+                self.dom_menu[dom]['url'] = match_info['url']
+                self.dom_menu[dom]['international'] = match_info['international']
+                clas = 0
+                
+                
+                GObject.idle_add(self.set_menu_item, clas,dom, match_info['score_summary'])
 
-            j += 1
+                
+                if dom == self.label_disp_index and self.label_clas == clas :
+                    GObject.idle_add(self.set_indicator_status , clas, self.dom_menu[dom]['ball'] )
+                
+                dom += 1
+            
+            
+        
+        
+        
 
-        """
-        print "updated menu"
-        for x in self.match_item_menu:
-            print x
-        """
+    def set_menu_item(self,clas, index,label_text):
+        self.match_menu[clas][index]['label'].set_label(label_text)
 
-    """
-        handlers
-    """
 
-    def set_menu_item(self,index,label_text):
-        self.match_item_menu[index]['label'].set_label(label_text)
-
-    def set_indicator_status(self, icon_name):
-        self.indicator.set_label(self.match_item_menu[self.label_disp_index]["label_text"],"")
-        print self.match_item_menu[self.label_disp_index]['url']
-
-        print "set_indicator_status: icon_name:", icon_name
+    def set_indicator_status(self,clas, icon_name):
+        
+        self.label_clas = clas
+        #print 
+        self.indicator.set_label(self.match_menu[self.label_clas][self.label_disp_index]['label_text'], "")
+        #print "set_indicator_status: icon_name:", icon_name
         self.indicator.set_icon(path.join(path.abspath(path.curdir), "screenshots", icon_name + ".png"))
 
-    def set_submenu_item(self, index , scorecard_text ):
-        self.match_item_menu[index]['scorecard'].set_label( scorecard_text)
+    def set_submenu_item(self, clas, index , scorecard_text ):
+        self.match_menu[clas][index]['scorecard'].set_label( scorecard_text)
 
-    def set_description(self,index, description_text):
-        self.match_item_menu[index]['gtk_description'].set_label(description_text)
+    def set_description(self,clas, index, description_text):
+        self.match_menu[clas][index]['gtk_description'].set_label(description_text)
 
-    def update_icon(self,index, icon_name):
+    def update_icon(self,clas, index, icon_name):
         if icon_name == "":
             # TODO: use a better image
             icon_name = "label_536"
@@ -239,45 +299,61 @@ class espn_ind:
 
         img = Gtk.Image()
         img.set_from_file(path.join(path.abspath(path.curdir), "screenshots", icon_name + ".png"))
-        print icon_name
-        self.match_item_menu[index]['label'].set_image(img)
+        #print icon_name
+        self.match_menu[clas][index]['label'].set_image(img)
 
-    def set_commentary(self, index, commentary_text):
-        self.match_item_menu[index]['gtk_commentary'].set_label(commentary_text)
+    def set_commentary(self, clas, index, commentary_text):
+        self.match_menu[clas][index]['gtk_commentary'].set_label(commentary_text)
 
 
     def  check_submenu(self):
-        """
-        print
-        print "in espn_indicator.py"
-        print "in check_submenu"
-        """
+        
         match_info = {}
+        intl = 1
+        dom = 1
         j = 0
+        
+        for match in self.match_menu:
+            for  category_match in match:
+                if('url' in category_match):
+                    
+                    match_info = self.scrap.get_match_data(j)
+                    
+                    if match_info['international']:
+                        self.intl_menu[intl]['scorecard_text']= str(match_info['scorecard_summary'])
+                        self.intl_menu[intl]['description'] = match_info['description']
+                        self.intl_menu[intl]['international'] = match_info['international']
+                        self.intl_menu[intl]['ball'] = match_info['ball']
+                        self.intl_menu[intl]['scorecard_summary'] = match_info['scorecard_summary']
+                        #print self.intl_menu[intl]
+                        clas = 1
+                        GObject.idle_add(self.update_icon, clas, intl , str(match_info['ball']))
+                        GObject.idle_add(self.set_submenu_item , clas, intl ,match_info['scorecard_summary'])
+                        GObject.idle_add(self.set_description , clas, intl ,match_info['description'])
+                        GObject.idle_add(self.set_commentary, clas, intl ,match_info['comms'])
 
-        for match in self.match_item_menu:
-            match_info = self.scrap.get_match_data(j)
-            #print match_info
-            self.match_item_menu[j]['scorecard_text'] = match_info['scorecard_summary']
-            self.match_item_menu[j]['scorecard_summary'] = match_info['scorecard_summary']
-            self.match_item_menu[j]['description'] = match_info['description']
-            self.match_item_menu[j]['ball'] = match_info['ball']
+                        intl += 1
+                    
+                    else:
+                        self.dom_menu[dom]['scorecard_text']= str(match_info['scorecard_summary'])
+                        self.dom_menu[dom]['description'] = match_info['description']
+                        self.dom_menu[dom]['international'] = match_info['international']
+                        self.dom_menu[dom]['ball'] = match_info['ball']
+                        self.dom_menu[dom]['scorecard_summary'] = match_info['scorecard_summary']
+                        #print self.dom_menu[dom]
+                        clas = 0
+                        GObject.idle_add(self.update_icon, clas, dom , str(match_info['ball']))
+                        GObject.idle_add(self.set_submenu_item , clas, dom ,match_info['scorecard_summary'])
+                        GObject.idle_add(self.set_description , clas, dom ,match_info['description'])
+                        GObject.idle_add(self.set_commentary, clas, dom ,match_info['comms'])
 
-            self.match_item_menu[j]['commentary_text'] = match_info['comms']
+                        dom += 1
+
+                    
+                    j += 1
 
 
-            GObject.idle_add(self.update_icon, j , str(match_info['ball']))
-            GObject.idle_add(self.set_submenu_item , j ,match_info['scorecard_summary'])
-            GObject.idle_add(self.set_description , j ,match_info['description'])
-            GObject.idle_add(self.set_commentary, j ,match_info['comms'])
-
-            j += 1
-
-        """
-        for x in self.match_item_menu:
-            print x
-        """
-
+        
 
 
 if __name__ == "__main__":
