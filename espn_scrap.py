@@ -27,7 +27,7 @@ class espn_scrap:
                 e.g. "Kent - 73/2 (9.2/20 ov) vs Gloucs"
 
             scorecard_summary:
-                can be empty as only international matches return 'centre'
+                can be empty as only international matches return 'centre' [json data]
 
             url:
                 url of match
@@ -124,10 +124,9 @@ class espn_scrap:
                     'scorecard_summary': 'Loading',
                     'url':               all_matches[i]['url'],
                     'ball':              "",
-                    #'description:
-                    #'comms':
+                    'description':       'Loading',
+                    'comms':             'Loading',
                     'international':     i in intl
-                    # NOTE: should we add more fields so that accessing them doesn't cause "KeyError"?
                     }
 
             self.match.append(match_info)
@@ -167,18 +166,19 @@ class espn_scrap:
         match_summary = "\n" + json_data['live']['status'] + "\n" +\
                               (json_data['live']['break'] + "\n" if json_data['live']['break'] != "" else "")
 
-        if json_data['live']['recent_overs']:
-            print 'get_match_data: .match .live_overs_unique ', json_data['match']['live_overs_unique'], json_data['description']
-            if not self.match[index]['international'] and json_data['match']['live_overs_unique'] == "0.00":
-                match_summary += "Latest over"      # some domestic matches don't track live overs
+        if json_data['live']:       # NOTE: do we really need this check?
+            # assuming 'innings' is defined whenever 'live' is there
+            if json_data['live']['recent_overs']:
+                match_summary += "\nOver (" + json_data['live']['innings']['overs'] + "): " +\
+                             " | ".join([ x['ball'].replace('&bull;', '0') +\
+                                          x['extras'].replace('&bull;', '0')  for x in json_data['live']['recent_overs'][-1]])
             else:
-                match_summary += "\nOver " +\
-                             "(" + json_data['match']['live_overs_unique'].replace(".0",".") + ")"   # 'live_overs_unique' returns something like 50.03. so we need to strip the extra '0'
-                             # NOTE: 'live_overs_unique' doesn't seems to be giving corrent value in case of domestic matches
-            match_summary += ": " + " | ".join([ x['ball'].replace('&bull;', '0') +\
-                                                 x['extras'].replace('&bull;', '0')  for x in json_data['live']['recent_overs'][-1]])
+                match_summary += "\nOvers: " + json_data['live']['innings']['overs']
+        else:
+            # TODO: DELME
+            print 'get_match_data: ', json_data['description'], 'No "live" :('
 
-        if json_data['centre']:
+        if json_data['centre']:     # not available in case of domestic and some international matches, so we cannot rely just on "international flag
             # NOTE: the formatting work here assumes *monotype* fonts, hence doesn't work for proportionated fonts :(
             # TODO: figure out a better method (tabular?) for displaying this data
             if json_data['centre']['batting']:
