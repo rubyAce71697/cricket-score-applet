@@ -166,19 +166,17 @@ class espn_scrap:
         match_summary = "\n" + json_data['live']['status'] + "\n" +\
                               (json_data['live']['break'] + "\n" if json_data['live']['break'] != "" else "")
 
-        if json_data['live']:       # NOTE: do we really need this check?
-            # assuming 'innings' is defined whenever 'live' is there
+        # NOTE: there's also json_data['innings'] which is an array of all the innings; 'live':'innings' only tracks the current one
+        if json_data['live']['innings']:        # in case match hasn't started yet
             if json_data['live']['recent_overs']:
                 match_summary += "\nOver (" + json_data['live']['innings']['overs'] + "): " +\
                              " | ".join([ x['ball'].replace('&bull;', '0') +\
                                           x['extras'].replace('&bull;', '0')  for x in json_data['live']['recent_overs'][-1]])
             else:
+                # assuming 'innings' is defined whenever 'live' is there
                 match_summary += "\nOvers: " + json_data['live']['innings']['overs']
-        else:
-            # TODO: DELME
-            print 'get_match_data: ', json_data['description'], 'No "live" :('
 
-        if json_data['centre']:     # not available in case of domestic and some international matches, so we cannot rely just on "international flag
+        if json_data['centre']:     # not available in case of domestic and some international matches, so we cannot rely just on "international" flag
             # NOTE: the formatting work here assumes *monotype* fonts, hence doesn't work for proportionated fonts :(
             # TODO: figure out a better method (tabular?) for displaying this data
             if json_data['centre']['batting']:
