@@ -20,6 +20,9 @@ class espn_scrap:
 
             "match_info" will contain following fields:
 
+            id:
+                TODO
+
             score_summary:
                 e.g. "Kent - 73/2 (9.2/20 ov) vs Gloucs"
 
@@ -41,9 +44,13 @@ class espn_scrap:
             comms:
                 live commentary text
                 TODO
+
+            international:
+                flag for international/domestic matches; == 1 -> international match
+
         """
         self.dummy_match_info = {
-                # TODO: use more sensible defaults such that checking for offline/online mode is easy
+                'id':                'Not available',
                 'score_summary':     'No data available: check networking settings',
                 'scorecard_summary': 'Not available',
                 'url':               'http://0.0.0.0',
@@ -83,8 +90,7 @@ class espn_scrap:
 
     def get_matches_summary(self):
         try:
-            
-            all_matches = (requests.get(SUMMARY_URL)).json()
+            summary = (requests.get(SUMMARY_URL)).json()
         except Exception as err:
             print ('Exception: ', err)
             self.offline = True
@@ -96,56 +102,40 @@ class espn_scrap:
         self.offline = False
         self.match = []
         # NOTE: if get_match_data is called at this point, then we're in trouble
-        intl = []
-        dom = []
-        """
-        for x in all_matches['modules']['ind']:
-                #print x
-                if x['category'] == 'dom':
-                    for dom_matches in x['submenu']:
-                        dom.append(dom_matches['matches'])
-                else:
-                    for int_matches in x['matches']:
-                        intl.append(intl_matches)
-        """
+        intl = summary['modules']['www'][0]['matches']
+        all_matches = summary['matches']
 
-        for i in all_matches['matches']:
+        for i in all_matches:
             # TODO: consider using match_clock if startstring is not available
             summary_text = "{team1_abbrev}{team1score} vs {team2_abbrev}{team2score} {startstring}".format(
-                team1_abbrev       = all_matches['matches'][i]['team1_abbrev'].strip().replace('&nbsp;', ' '),
-                team1score  = (' - ' + all_matches['matches'][i]['team1_score'].strip().replace('&nbsp;', ' ').replace('&amp;', '&'))\
-                                if all_matches['matches'][i]['team1_score'].strip() else '',
-                team2_abbrev       = all_matches['matches'][i]['team2_abbrev'].strip().replace('&nbsp;',  ' '),
-                team2score  = (' - ' + all_matches['matches'][i]['team2_score'].strip().replace('&nbsp;', ' ').replace('&amp;', '&'))\
-                                if all_matches['matches'][i]['team2_score'].strip() else '',
-                startstring = (' - ' + all_matches['matches'][i]['start_string'].strip().replace('&nbsp;', ' '))\
-                                if 'start_string' in all_matches['matches'][i] else ''
+                team1_abbrev = all_matches[i]['team1_abbrev'].strip().replace('&nbsp;', ' '),
+                team1score   = (' - ' + all_matches[i]['team1_score'].strip().replace('&nbsp;', ' ').replace('&amp;', '&'))\
+                                if all_matches[i]['team1_score'].strip() else '',
+                team2_abbrev = all_matches[i]['team2_abbrev'].strip().replace('&nbsp;',  ' '),
+                team2score   = (' - ' + all_matches[i]['team2_score'].strip().replace('&nbsp;', ' ').replace('&amp;', '&'))\
+                                if all_matches[i]['team2_score'].strip() else '',
+                startstring  = (' - ' + all_matches[i]['start_string'].strip().replace('&nbsp;', ' '))\
+                                if 'start_string' in all_matches[i] else ''
                 )
 
             match_info = {
                     'id':                i,
-                    'url':               all_matches['matches'][i]['url'],
                     'score_summary':     summary_text,
                     'scorecard_summary': 'Loading',
+                    'url':               all_matches[i]['url'],
+                    'ball':              "",
+                    #'description:
+                    #'comms':
+                    'international':     i in intl
                     # NOTE: should we add more fields so that accessing them doesn't cause "KeyError"?
-                    'international':      0,
-                    'ball': ""
                     }
-            if intl != []:
-
-                if i in intl_list:
-                    match_info['international'] = 1        
 
             self.match.append(match_info)
-
-
 
         return self.match
 
     def get_match_data(self, index):
         try:
-            #print index
-            #print self.match[index]['url']
             json_data = (requests.get(MATCH_URL(self.match[index]['url']), headers = self.requestParam)).json()
         except Exception as err:
             print ('Exception: ', err)
@@ -161,39 +151,28 @@ class espn_scrap:
         if json_data['live']['recent_overs']:
             self.match[index]['ball'] = (json_data['live']['recent_overs'][-1][-1]['ball']).replace('&bull;', '0')
 
-        self.match[index]['description'] = ''
-        """
-        Review the code below; What are assumptions for selecting (or splitting) parts of 'description'?
-        TODO: refactor the code; replace loops with loop comprehensions
-        """
         """
         split description into parts.
         e.g. "India tour of Bangladesh, Only Test: Bangladesh v India at Fatullah, Jun 10-14, 2015"
         will become:
             India tour of Bangladesh
-            Only Test
-            Bangladesh v India at Fatullah
+            Only Test: Bangladesh v India at Fatullah
             Jun 10-14
             2015
-        NOTE: Is the format consistent? If yes, then we can avoid splitting date, it looks a bit odd.
         """
-        for x in json_data['description'].split(','):
-            if len(x) >= 44:    # why 44?
-                for y in x.split(':'):
-                    self.match[index]['description'] += y.lstrip() + "\n"
-                self.match[index]['description'] = self.match[index]['description'][:-1]    # for removing '\n'
-            else:
-                self.match[index]['description'] += x.lstrip()
-            self.match[index]['description'] += "\n"
-
-        self.match[index]['description'] = self.match[index]['description'][:-1]
-
+        #self.match[index]['description'] = '\n'.join(json_data['description'].replace(',', '\n'))
+        # HACK: assumes a single space is followed by ','; replace if above line in case of failure
+        self.match[index]['description'] = json_data['description'].replace(', ', '\n')
 
         match_summary = "\n" + json_data['live']['status'] + "\n" +\
-                        (json_data['live']['break'] + "\n" if json_data['live']['break'] != "" else "")
+                              (json_data['live']['break'] + "\n" if json_data['live']['break'] != "" else "")
 
         if json_data['live']['recent_overs']:
-            match_summary += "\nOver " +\
+            print 'get_match_data: .match .live_overs_unique ', json_data['match']['live_overs_unique'], json_data['description']
+            if not self.match[index]['international'] and json_data['match']['live_overs_unique'] == "0.00":
+                match_summary += "Latest over"      # some domestic matches don't track live overs
+            else:
+                match_summary += "\nOver " +\
                              "(" + json_data['match']['live_overs_unique'].replace(".0",".") + ")"   # 'live_overs_unique' returns something like 50.03. so we need to strip the extra '0'
                              # NOTE: 'live_overs_unique' doesn't seems to be giving corrent value in case of domestic matches
             match_summary += ": " + " | ".join([ x['ball'].replace('&bull;', '0') +\
