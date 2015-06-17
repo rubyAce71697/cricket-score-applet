@@ -13,15 +13,11 @@ MATCH_URL = lambda match_url: BASE_URL + match_url[:-5] + ".json"
 class espn_scrap:
     def __init__(self):
         self.offline = True
+
         # for maintaing list of matches, an array of "match_info"
         self.match = []
         """
-            TODO: add the new fields
-
             "match_info" will contain following fields:
-
-            id:
-                TODO
 
             score_summary:
                 e.g. "Kent - 73/2 (9.2/20 ov) vs Gloucs"
@@ -50,7 +46,6 @@ class espn_scrap:
 
         """
         self.dummy_match_info = {
-                'id':                'Not available',
                 'score_summary':     'No data available: check networking settings',
                 'scorecard_summary': 'Not available',
                 'url':               'http://0.0.0.0',
@@ -102,14 +97,11 @@ class espn_scrap:
         self.offline = False
         self.match = []
         # NOTE: if get_match_data is called at this point, then we're in trouble
-        #intl = summary['modules']['www'][0]['matches']
-        #intl = [x for x in summary['modules']['www'][0] if x['category'] == 'intl']
+
         intl = []
         for x in summary['modules']['www']:
             if x['category'] == 'intl':
-                for y in x['matches']:
-                    intl.append(y)
-
+                intl.extend(x['matches'])
 
         all_matches = summary['matches']
 
@@ -127,7 +119,6 @@ class espn_scrap:
                 )
 
             match_info = {
-                    'id':                i,
                     'score_summary':     summary_text,
                     'scorecard_summary': 'Loading',
                     'url':               all_matches[i]['url'],
@@ -176,12 +167,11 @@ class espn_scrap:
 
         # NOTE: there's also json_data['innings'] which is an array of all the innings; 'live':'innings' only tracks the current one
         if json_data['live']['innings']:        # in case match hasn't started yet
-            if json_data['live']['recent_overs']:
+            if json_data['live']['recent_overs']:   # some domestic matches don't have 'recent_overs'
                 match_summary += "\nOver (" + json_data['live']['innings']['overs'] + "): " +\
                              " | ".join([ x['ball'].replace('&bull;', '0') +\
                                           x['extras'].replace('&bull;', '0')  for x in json_data['live']['recent_overs'][-1]])
             else:
-                # assuming 'innings' is defined whenever 'live' is there
                 match_summary += "\nOvers: " + json_data['live']['innings']['overs']
 
         if json_data['centre']:     # not available in case of domestic and some international matches, so we cannot rely just on "international" flag
