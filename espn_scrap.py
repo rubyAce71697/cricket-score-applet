@@ -76,7 +76,7 @@ class espn_scrap:
             team1_abbrev, team1_name, team1_score,
             team2_abbrev, team2_name, team2_score,
             start_string,   // local + GMT time
-            start_time      // data + time
+            start_time      // date + time of match
         NOTE: incomplete list
         """
 
@@ -106,16 +106,17 @@ class espn_scrap:
         all_matches = summary['matches']
 
         for i in all_matches:
-            # TODO: consider using match_clock if startstring is not available
-            summary_text = "{team1_abbrev}{team1score} vs {team2_abbrev}{team2score} {startstring}".format(
+            summary_text = "{team1_abbrev}{team1score} vs {team2_abbrev}{team2score}{startstring}{match_clock}".format(
                 team1_abbrev = all_matches[i]['team1_abbrev'].strip().replace('&nbsp;', ' '),
                 team1score   = (' - ' + all_matches[i]['team1_score'].strip().replace('&nbsp;', ' ').replace('&amp;', '&'))\
                                 if all_matches[i]['team1_score'].strip() else '',
                 team2_abbrev = all_matches[i]['team2_abbrev'].strip().replace('&nbsp;',  ' '),
                 team2score   = (' - ' + all_matches[i]['team2_score'].strip().replace('&nbsp;', ' ').replace('&amp;', '&'))\
                                 if all_matches[i]['team2_score'].strip() else '',
-                startstring  = (' - ' + all_matches[i]['start_string'].strip().replace('&nbsp;', ' '))\
-                                if 'start_string' in all_matches[i] else ''
+                startstring  = (' at ' + all_matches[i]['start_string'].strip().replace('&nbsp;', ' '))\
+                                if 'start_string' in all_matches[i] else '',
+                match_clock  = (' in ' + all_matches[i]['match_clock'].strip().replace('&nbsp;', ' '))\
+                                if 'match_clock' in all_matches[i] else ''
                 )
 
             match_info = {
