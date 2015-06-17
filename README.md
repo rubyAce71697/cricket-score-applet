@@ -9,10 +9,10 @@ Uses the unofficial JSON from [ESPN Website](http://www.espncricinfo.com/) to ge
 
 ## Screenshots
 Shows the live scores in panel
-![](./screenshots/label1.png "Label gets updated with latest score")
+![](./screenshots/panel_image.png "Label gets updated with latest score")
 
 Menu displays the current matches from the ESPN Cricinfo website.
-![](./screenshots/main_menu.png "Listing all the matches")
+![](./screenshots/mainmenu_image.png "Listing all the matches")
 
 Submenu shows scorecard (only for international matches such as IND vs AUS)
-![](./screenshots/submenu1.png "Click 'Set as label' to display the scores from this match as the label text in panel")
+![](./screenshots/submenu_image.png "Click 'Set as label' to display the scores from this match as the label text in panel")
