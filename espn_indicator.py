@@ -4,7 +4,7 @@ Created on 06-Jun-2015
 @author: nishant
 """
 
-from gi.repository import Gtk , GObject
+from gi.repository import Gtk, GObject
 from gi.repository import AppIndicator3 as appindicator
 
 from os import path
@@ -17,7 +17,7 @@ from about import About
 
 REFRESH_TIMEOUT = 5 # second(s)
 APP_ID = "espn-indicator"
-ICON_PATH = path.join(path.abspath(path.curdir), "screenshots/label_536.png")
+ICON_PATH = path.join(path.abspath(path.curdir), "screenshots/default_white.png")
 
 class espn_ind:
     def __init__(self):
@@ -29,11 +29,16 @@ class espn_ind:
         self.indicator.set_status(appindicator.IndicatorStatus.ACTIVE)
 
         self.scrap = espn_scrap()
+
+        # TODO: remove toggle
         self.toggle = True
         # create the menu and submenu
+
         self.label_disp_index = 1
         self.label_clas = 0
+
         self.menu_setup()
+
         self.indicator.set_menu(self.menu)
 
     def menu_setup(self):
@@ -47,8 +52,8 @@ class espn_ind:
         self.match_menu = []
         self.intl_menu = []
         self.intl_menu.append({
-            'label':      Gtk.MenuItem(u"INTERNATIONAL"),
-            'label_text': u"International", })
+            'label':      Gtk.MenuItem("INTERNATIONAL"),
+            'label_text': "INTERNATIONAL", })
 
         self.intl_menu[0]['label'].set_sensitive(False)
 
@@ -89,7 +94,7 @@ class espn_ind:
             self.match_item['submenu'].append(self.match_item['gtk_commentary'])
             self.match_item['label'].set_submenu(self.match_item['submenu'])
             img = Gtk.Image()
-            img.set_from_file(path.join(path.abspath(path.curdir), "screenshots/label_536.png"))
+            img.set_from_file(path.join(path.abspath(path.curdir), "screenshots/default_white.png"))
             self.match_item['label'].set_image(img)
             self.match_item['label'].set_always_show_image(True)
 
@@ -126,9 +131,9 @@ class espn_ind:
         self.submenu_item.connect("activate",self.set_submenu_visibile)
 
         #you have to attatch the window in future
-        self.preferences_item = Gtk.MenuItem("Preferences <beware its not working>")
-        self.menu.append(self.preferences_item)
-        self.preferences_item.show()
+        #self.preferences_item = Gtk.MenuItem("Preferences <beware its not working>")
+        #self.menu.append(self.preferences_item)
+        #self.preferences_item.show()
 
         self.about_item = Gtk.MenuItem("About")
         self.menu.append(self.about_item)
@@ -165,7 +170,7 @@ class espn_ind:
     def set_submenu_visibile(self,widget):
         self.toggle = not self.toggle
         if(self.toggle):
-            self.preferences_item.show()
+            #self.preferences_item.show()
             for match in self.match_menu:
                 for category_match in match:
                     if 'submenu' in category_match:
@@ -176,7 +181,7 @@ class espn_ind:
             self.submenu_item.set_label("Hide Submenu")
             #print self.toggle
         else:
-            self.preferences_item.hide()
+            #self.preferences_item.hide()
             for match in self.match_menu:
                 for category_match in match:
                     if 'submenu' in category_match:
@@ -236,7 +241,8 @@ class espn_ind:
     def set_indicator_status(self,clas, icon_name):
         self.label_clas = clas
         self.indicator.set_label(self.match_menu[self.label_clas][self.label_disp_index]['label_text'], "")
-        #print "set_indicator_status: icon_name:", icon_name
+        if icon_name == "":
+            icon_name = "default_white"
         self.indicator.set_icon(path.join(path.abspath(path.curdir), "screenshots", icon_name + ".png"))
 
     def set_submenu_item(self, clas, index , scorecard_text ):
@@ -247,8 +253,7 @@ class espn_ind:
 
     def update_icon(self,clas, index, icon_name):
         if icon_name == "":
-            # TODO: use a better image
-            icon_name = "label_536"
+            icon_name = "default_white"
 
         #print "update_icon: \"{icon_name}\"".format(icon_name=icon_name)
         img = Gtk.Image()
