@@ -194,12 +194,12 @@ class espn_ind:
     def update_scores(self):
         while True:
             self.update_labels()
-            time.sleep(REFRESH_TIMEOUT)
+            time.sleep(REFRESH_TIMEOUT-3)
 
     def update_submenu(self):
         while True:
             self.check_submenu()
-            time.sleep(REFRESH_TIMEOUT)
+            time.sleep(REFRESH_TIMEOUT-3)
 
     def update_labels(self):
         matches_summary = self.scrap.get_matches_summary()
