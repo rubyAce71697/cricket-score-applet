@@ -201,26 +201,46 @@ class espn_scrap:
 
         self.match[index]['comms'] = ""
         # NOTE: 'comms' field is not available in domestic matches, check before use
-        #match_comm = ""
-        #for x in json_data['comms'][0]['ball']:
-        #    if ('event' in x):
-        #        if(x['event'] == "OUT"):
-        #            x['dismissal'] = " : " + x['dismissal']
-        #            pass
-        #        if(x['text']):
-        #            x['text'] = " : " + x['text']
-        #            if( len(x['text']) >= 44 ):
-        #                t = x['text'].split(",")
-        #                x['text'] = ""
-        #                x['text'] += t[0]
-        #                x['text'] += "\n"
-        #                x['text'] += t[1].lstrip()
+        match_comm = "\n"
+        if(json_data['comms']):
 
-        #        #print 'commentary'
-        #        #print x['overs_actual'] + " "  + x['players'] + " : " + " " +  x['event'] + x['dismissal']  +x['text']
-        #        match_comm += (x['overs_actual'] + " "  + x['players'] + " : " + " " +  x['event'] + x['dismissal']  +x['text']).rstrip()
-        #        match_comm += '\n'
+            for x in json_data['comms'][0]['ball']:
+                if ('event' in x):
+                    if(x['event'] == "OUT"):
+                        x['dismissal'] = " : " + x['dismissal']
+                        pass
+                    """
+                    if(x['text']):
+                        x['text'] = " : " + x['text']
+                        if( len(x['text']) >= 44 ):
+                            if(',' in x['text']):
+                                t = x['text']
+                                x['text'] = ""
+                                for y in  t.split(","):
+                                    
+                                    if( '.' in  y):
+                                        z = y.split('.')
+                                        for a in z:
+                                            x['text'] += a.lstrip()+ '\n'
+                                            break
+                                    else:
+                                        if len(y) > 44:
+                                            groups = y.split(" ")
+                                            sep = ""
+                                            n_split_groups = []
+                                            while len(groups):
+                                                n_split_groups.append(sep.join(groups[:7]))
+                                                groups = groups[7:]
 
-        #self.match[index]['comms'] = match_comm
+                                            x['text'] += sep.lstrip() + "\n"
+                    """
+                    x['text'] = ""
+
+                    #print 'commentary'
+                    #print x['overs_actual'] + " "  + x['players'] + " : " + " " +  x['event'] + x['dismissal']  +x['text']
+                    match_comm += (x['overs_actual'] + " "  + x['players'] + " : " + " " +  x['event'] + x['dismissal']  +x['text']).rstrip()
+                    match_comm += '\n'
+
+            self.match[index]['comms'] = match_comm
 
         return self.match[index]
