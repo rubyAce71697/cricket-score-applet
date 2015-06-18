@@ -85,7 +85,7 @@ class espn_ind:
                     'international':   match_info['international'],
             }
 
-            self.match_item['show'].connect("activate",self.show_clicked,match_info['international'],intl,dom, match_info['ball'])
+            self.match_item['show'].connect("activate",self.show_clicked, not match_info['international'],intl,dom, match_info['ball'])
             self.match_item['scorecard'].set_sensitive(False)
             #self.menu.append(self.match_item['label'])
             self.match_item['submenu'].append(self.match_item['show'])
@@ -109,10 +109,10 @@ class espn_ind:
 
             i += 1
 
-        print "intl menu"
-        self.match_menu.append(self.dom_menu)
+        
         self.match_menu.append(self.intl_menu)
-
+        self.match_menu.append(self.dom_menu)
+        
         self.intl_menu[0]['label'].show()
         self.dom_menu[0]['label'].show()
         for x in self.match_menu:
@@ -160,11 +160,11 @@ class espn_ind:
     	About().display()
 
     def show_clicked(self,widget, clas, intl, dom, icon_name):
-        if clas:
+        if not clas:
             self.label_disp_index = intl
         else:
             self.label_disp_index = dom
-
+        
         GObject.idle_add(self.set_indicator_status,clas, icon_name)
 
     def set_submenu_visibile(self,widget):
@@ -214,7 +214,7 @@ class espn_ind:
                 self.intl_menu[intl]['label_text']= str(match_info['score_summary'])
                 self.intl_menu[intl]['url'] = match_info['url']
                 self.intl_menu[intl]['international'] = match_info['international']
-                clas = 1
+                clas = 0
 
                 GObject.idle_add(self.set_menu_item, clas,intl, match_info['score_summary'])
 
@@ -226,7 +226,7 @@ class espn_ind:
                 self.dom_menu[dom]['label_text'] = str(match_info['score_summary'])
                 self.dom_menu[dom]['url'] = match_info['url']
                 self.dom_menu[dom]['international'] = match_info['international']
-                clas = 0
+                clas = 1
 
                 GObject.idle_add(self.set_menu_item, clas,dom, match_info['score_summary'])
 
@@ -281,7 +281,7 @@ class espn_ind:
                         self.intl_menu[intl]['ball'] = match_info['ball']
                         self.intl_menu[intl]['scorecard_summary'] = match_info['scorecard_summary']
                         #print self.intl_menu[intl]
-                        clas = 1
+                        clas = 0
                         GObject.idle_add(self.update_icon, clas, intl , str(match_info['ball']))
                         GObject.idle_add(self.set_submenu_item , clas, intl ,match_info['scorecard_summary'])
                         GObject.idle_add(self.set_description , clas, intl ,match_info['description'])
@@ -294,7 +294,7 @@ class espn_ind:
                         self.dom_menu[dom]['ball'] = match_info['ball']
                         self.dom_menu[dom]['scorecard_summary'] = match_info['scorecard_summary']
                         #print self.dom_menu[dom]
-                        clas = 0
+                        clas = 1
                         GObject.idle_add(self.update_icon, clas, dom , str(match_info['ball']))
                         GObject.idle_add(self.set_submenu_item , clas, dom ,match_info['scorecard_summary'])
                         GObject.idle_add(self.set_description , clas, dom ,match_info['description'])
