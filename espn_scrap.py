@@ -13,15 +13,11 @@ MATCH_URL = lambda match_url: BASE_URL + match_url[:-5] + ".json"
 class espn_scrap:
     def __init__(self):
         self.offline = True
+
         # for maintaing list of matches, an array of "match_info"
         self.match = []
         """
-            TODO: add the new fields
-
             "match_info" will contain following fields:
-
-            id:
-                TODO
 
             score_summary:
                 e.g. "Kent - 73/2 (9.2/20 ov) vs Gloucs"
@@ -50,7 +46,6 @@ class espn_scrap:
 
         """
         self.dummy_match_info = {
-                'id':                'Not available',
                 'score_summary':     'No data available: check networking settings',
                 'scorecard_summary': 'Not available',
                 'url':               'http://0.0.0.0',
@@ -81,7 +76,7 @@ class espn_scrap:
             team1_abbrev, team1_name, team1_score,
             team2_abbrev, team2_name, team2_score,
             start_string,   // local + GMT time
-            start_time      // data + time
+            start_time      // date + time of match
         NOTE: incomplete list
         """
 
@@ -102,32 +97,29 @@ class espn_scrap:
         self.offline = False
         self.match = []
         # NOTE: if get_match_data is called at this point, then we're in trouble
-        #intl = summary['modules']['www'][0]['matches']
-        #intl = [x for x in summary['modules']['www'][0] if x['category'] == 'intl']
+
         intl = []
         for x in summary['modules']['www']:
             if x['category'] == 'intl':
-                for y in x['matches']:
-                    intl.append(y)
-
+                intl.extend(x['matches'])
 
         all_matches = summary['matches']
 
         for i in all_matches:
-            # TODO: consider using match_clock if startstring is not available
-            summary_text = "{team1_abbrev}{team1score} vs {team2_abbrev}{team2score} {startstring}".format(
+            summary_text = "{team1_abbrev}{team1score} vs {team2_abbrev}{team2score}{startstring}{match_clock}".format(
                 team1_abbrev = all_matches[i]['team1_abbrev'].strip().replace('&nbsp;', ' '),
                 team1score   = (' - ' + all_matches[i]['team1_score'].strip().replace('&nbsp;', ' ').replace('&amp;', '&'))\
                                 if all_matches[i]['team1_score'].strip() else '',
                 team2_abbrev = all_matches[i]['team2_abbrev'].strip().replace('&nbsp;',  ' '),
                 team2score   = (' - ' + all_matches[i]['team2_score'].strip().replace('&nbsp;', ' ').replace('&amp;', '&'))\
                                 if all_matches[i]['team2_score'].strip() else '',
-                startstring  = (' - ' + all_matches[i]['start_string'].strip().replace('&nbsp;', ' '))\
-                                if 'start_string' in all_matches[i] else ''
+                startstring  = (' at ' + all_matches[i]['start_string'].strip().replace('&nbsp;', ' '))\
+                                if 'start_string' in all_matches[i] else '',
+                match_clock  = (' in ' + all_matches[i]['match_clock'].strip().replace('&nbsp;', ' '))\
+                                if 'match_clock' in all_matches[i] else ''
                 )
 
             match_info = {
-                    'id':                i,
                     'score_summary':     summary_text,
                     'scorecard_summary': 'Loading',
                     'url':               all_matches[i]['url'],
@@ -174,19 +166,16 @@ class espn_scrap:
         match_summary = "\n" + json_data['live']['status'] + "\n" +\
                               (json_data['live']['break'] + "\n" if json_data['live']['break'] != "" else "")
 
-        if json_data['live']:       # NOTE: do we really need this check?
-            # assuming 'innings' is defined whenever 'live' is there
-            if json_data['live']['recent_overs']:
+        # NOTE: there's also json_data['innings'] which is an array of all the innings; 'live':'innings' only tracks the current one
+        if json_data['live']['innings']:        # in case match hasn't started yet
+            if json_data['live']['recent_overs']:   # some domestic matches don't have 'recent_overs'
                 match_summary += "\nOver (" + json_data['live']['innings']['overs'] + "): " +\
                              " | ".join([ x['ball'].replace('&bull;', '0') +\
                                           x['extras'].replace('&bull;', '0')  for x in json_data['live']['recent_overs'][-1]])
             else:
                 match_summary += "\nOvers: " + json_data['live']['innings']['overs']
-        else:
-            # TODO: DELME
-            print 'get_match_data: ', json_data['description'], 'No "live" :('
 
-        if json_data['centre']:     # not available in case of domestic and some international matches, so we cannot rely just on "international flag
+        if json_data['centre']:     # not available in case of domestic and some international matches, so we cannot rely just on "international" flag
             # NOTE: the formatting work here assumes *monotype* fonts, hence doesn't work for proportionated fonts :(
             # TODO: figure out a better method (tabular?) for displaying this data
             if json_data['centre']['batting']:
