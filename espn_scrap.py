@@ -29,7 +29,7 @@ class espn_scrap:
                 url of match
                 e.g. "http://www.espncricinfo.com/natwest-t20-blast-2015/engine/match/804513.html"
 
-            ball:
+            last_ball:
                 result of the most recent ball
                 e.g. '1', 'W', '0' etc.
 
@@ -49,7 +49,7 @@ class espn_scrap:
                 'score_summary':     'No data available: check networking settings',
                 'scorecard_summary': 'Not available',
                 'url':               'http://0.0.0.0',
-                'ball':              'Not available',
+                'last_ball':         'Not available',
                 'description':       'Not available',
                 'comms':             'Not available',
                 'international':     'Not available',
@@ -123,7 +123,7 @@ class espn_scrap:
                     'score_summary':     summary_text,
                     'scorecard_summary': 'Loading',
                     'url':               all_matches[i]['url'],
-                    'ball':              "",
+                    'last_ball':         "",
                     'description':       'Loading',
                     'comms':             'Loading',
                     'international':     i in intl
@@ -146,9 +146,9 @@ class espn_scrap:
 
         self.offline = False
 
-        self.match[index]['ball'] = ''
+        self.match[index]['last_ball'] = ''
         if json_data['live']['recent_overs']:
-            self.match[index]['ball'] = (json_data['live']['recent_overs'][-1][-1]['ball']).replace('&bull;', '0')
+            self.match[index]['last_ball'] = (json_data['live']['recent_overs'][-1][-1]['ball']).replace('&bull;', '0')
 
         """
         split description into parts.
@@ -181,7 +181,8 @@ class espn_scrap:
             if json_data['centre']['batting']:
                 match_summary += "\n\nBatsman:   runs (balls)\n" +\
                                  "\n".join([ "{player_name:<12} {runs:>4} ({balls:^5})".format( \
-                                                    player_name = x['popular_name'] + ("*" if x['live_current_name'] == "striker" else ""),
+                                                    # NOTE: in some cases 'popular_name' may be empty, so using 'known_as' instead
+                                                    player_name = (x['popular_name'] if x['popular_name'] else x['known_as']) + ("*" if x['live_current_name'] == "striker" else ""),
                                                     runs        = x['runs'],
                                                     balls       = x['balls_faced']
                                             ) for x in json_data['centre']['batting']])
@@ -189,7 +190,7 @@ class espn_scrap:
             if json_data['centre']['bowling']:
                 match_summary += "\n\nBowlers:   overs-maidens-runs-wickets  economy-rate\n" +\
                                  "\n".join([ "{player_name:<12} {overs} - {maidens} - {runs} - {wickets}  {economy}".format( \
-                                                    player_name = x['popular_name'] + ("*" if x['live_current_name'] == "current bowler" else ""),
+                                                    player_name = (x['popular_name'] if x['popular_name'] else x['known_as']) + ("*" if x['live_current_name'] == "current bowler" else ""),
                                                     overs       = x['overs'],
                                                     maidens     = x['maidens'],
                                                     runs        = x['conceded'],
