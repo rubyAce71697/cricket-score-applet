@@ -183,27 +183,12 @@ class espn_scrap:
         self.match[m_id]['scorecard_summary'] = match_summary
 
         self.match[m_id]['comms'] = ""
-        # NOTE: 'comms' field is not available in domestic matches, check before use
-        #match_comm = ""
-        #for x in json_data['comms'][0]['ball']:
-        #    if ('event' in x):
-        #        if(x['event'] == "OUT"):
-        #            x['dismissal'] = " : " + x['dismissal']
-        #            pass
-        #        if(x['text']):
-        #            x['text'] = " : " + x['text']
-        #            if( len(x['text']) >= 44 ):
-        #                t = x['text'].split(",")
-        #                x['text'] = ""
-        #                x['text'] += t[0]
-        #                x['text'] += "\n"
-        #                x['text'] += t[1].lstrip()
-
-        #        #print 'commentary'
-        #        #print x['overs_actual'] + " "  + x['players'] + " : " + " " +  x['event'] + x['dismissal']  +x['text']
-        #        match_comm += (x['overs_actual'] + " "  + x['players'] + " : " + " " +  x['event'] + x['dismissal']  +x['text']).rstrip()
-        #        match_comm += '\n'
-
-        #self.match[m_id]['comms'] = match_comm
+        if json_data['comms']:
+            self.match[m_id]['comms'] = '\n' + '\n'.join(["{overs} {players} : {event}{dismissal}".format(
+                                                        overs     = x['overs_actual'],
+                                                        players   = x['players'],
+                                                        event     = x['event'],
+                                                        dismissal = ("\n\t" + x['dismissal'].replace("&amp;","&").replace("&nbsp;"," ").replace("&bull;","0")) if x['dismissal'] != "" else "",
+                                                        ) for x in json_data['comms'][0]['ball'] if 'event' in x])
 
         return self.match[m_id]
