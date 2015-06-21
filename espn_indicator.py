@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from gi.repository import Gtk, GObject
+from gi.repository import Gtk, GObject, GdkPixbuf
 from gi.repository import AppIndicator3 as appindicator
 
 from os import path
@@ -9,10 +9,9 @@ import time
 import signal
 
 from espn_scrap import espn_scrap
-from about import About
 
-REFRESH_TIMEOUT = 5 # second(s)
-ICON_PATH = path.join(path.abspath(path.curdir), "screenshots/")
+REFRESH_TIMEOUT = 3 # second(s)
+ICON_PATH = path.join(path.abspath(path.curdir), "icons/")
 
 class espn_ind:
     def __init__(self):
@@ -137,7 +136,20 @@ class espn_ind:
         Gtk.main_quit()
 
     def about(self, widget):
-    	About().display()
+    	dialog = Gtk.AboutDialog.new()
+        # fixes the "mapped without transient parent" warning
+        dialog.set_transient_for(widget.get_parent().get_parent())
+
+    	dialog.set_program_name("ESPN Indicator")
+    	dialog.add_credit_section("Authors:", ['Nishant Kukreja (github.com/rubyace71697)', 'Abhishek Rose (github.com/rawcoder)'])
+    	dialog.set_license_type(Gtk.License.GPL_3_0)
+    	dialog.set_website("https://github.com/rubyAce71697/cricket-score-applet")
+    	dialog.set_website_label("Github page")
+    	dialog.set_comments("Displays live scores from ESPN website in your indicator panel")
+    	dialog.set_logo(GdkPixbuf.Pixbuf.new_from_file(ICON_PATH + "default_black" + ".png"))
+
+    	dialog.run()
+    	dialog.destroy()
 
     def show_clicked(self, widget):
         """
