@@ -1,59 +1,37 @@
-"""
-Created on 06-Jun-2015
-
-@author: nishant
-"""
-
 import requests
 
-BASE_URL = "http://www.espncricinfo.com"
+BASE_URL = "http://espncricinfo.com"
 SUMMARY_URL = BASE_URL + "/netstorage/summary.json"
 MATCH_URL = lambda match_url: BASE_URL + match_url[:-5] + ".json"
 
 class espn_scrap:
     def __init__(self):
-        self.offline = True
-
         # for maintaing list of matches, an array of "match_info"
-        self.match = []
+        self.match = {}
         """
             "match_info" will contain following fields:
 
-            score_summary:
-                e.g. "Kent - 73/2 (9.2/20 ov) vs Gloucs"
-
-            scorecard_summary:
-                can be empty as only international matches return 'centre' [json data]
-
-            url:
-                url of match
-                e.g. "http://www.espncricinfo.com/natwest-t20-blast-2015/engine/match/804513.html"
-
-            last_ball:
-                result of the most recent ball
-                e.g. '1', 'W', '0' etc.
-
-            description:
-                description of current match
-                e.g. "India tour of Bangladesh, Only Test: Bangladesh v India at Fatullah, Jun 10-14, 2015"
-
-            comms:
-                live commentary text
-                TODO
-
-            international:
-                flag for international/domestic matches; == 1 -> international match
-
+            id                : unique ID of match
+            score_summary     : e.g. "Kent - 73/2 (9.2/20 ov) vs Gloucs"
+            scorecard_summary : can be empty as only international matches return 'centre' [json data]
+            url               : url of match e.g. "http://www.espncricinfo.com/natwest-t20-blast-2015/engine/match/804513.html"
+            last_ball         : result of the most recent ball e.g. '1', 'W', '0' etc.
+            description       : description of current match e.g. "India tour of Bangladesh, Only Test: Bangladesh v India at Fatullah, Jun 10-14, 2015"
+            comms             : live commentary text
+            international     : flag for international/domestic matches; True -> international match
         """
-        self.dummy_match_info = {
+        self.dummy_match_info_intl = {
+                'id':                ':(',
                 'score_summary':     'No data available: check networking settings',
                 'scorecard_summary': 'Not available',
-                'url':               'http://0.0.0.0',
-                'last_ball':         'Not available',
+                'url':               ':)',
+                'last_ball':         '_',
                 'description':       'Not available',
                 'comms':             'Not available',
-                'international':     'Not available',
+                'international':     True,
                 }
+        self.dummy_match_info_dom = dict(self.dummy_match_info_intl)
+        self.dummy_match_info_dom['international'] = False
 
         # set the parameters which will be sent with each request
         self.requestParam = {
@@ -66,8 +44,26 @@ class espn_scrap:
                 'Cache-Control':   "max-age=0",
                 }
 
+    def get_matches_summary(self):
+        try:
+            summary = (requests.get(SUMMARY_URL)).json()
+        except Exception as err:
+            print ('Exception: ', err)
+            if self.match == {}:
+                return [self.dummy_match_info_intl], [self.dummy_match_info_dom]
+            else:
+                return [m for m in self.match.values() if m['international']], [m for m in self.match.values() if not m['international']]
+
+        self.match = {}
+
+        intl = []
+        for x in summary['modules']['www']:
+            if x['category'] == 'intl':
+                intl.extend(x['matches'])
+
+        all_matches = summary['matches']
         """
-        Data fields returned by summary.json:
+        Data fields returned by summary.json:'matches'
             live_match,     // "Y"/"N" flag
             description,    //info about match
             match_clock,    // time duration from start
@@ -80,30 +76,8 @@ class espn_scrap:
         NOTE: incomplete list
         """
 
-    def is_offline(self):
-        return self.offline
-
-    def get_matches_summary(self):
-        try:
-            summary = (requests.get(SUMMARY_URL)).json()
-        except Exception as err:
-            print ('Exception: ', err)
-            self.offline = True
-            if self.match == []:
-                return [self.dummy_match_info]
-            else:
-                return self.match
-
-        self.offline = False
-        self.match = []
-        # NOTE: if get_match_data is called at this point, then we're in trouble
-
-        intl = []
-        for x in summary['modules']['www']:
-            if x['category'] == 'intl':
-                intl.extend(x['matches'])
-
-        all_matches = summary['matches']
+        intl_matches = []
+        dom_matches = []
 
         for i in all_matches:
             summary_text = "{team1_abbrev}{team1score} vs {team2_abbrev}{team2score}{startstring}{match_clock}".format(
@@ -120,35 +94,38 @@ class espn_scrap:
                 )
 
             match_info = {
+                    'id':                i,
                     'score_summary':     summary_text,
                     'scorecard_summary': 'Loading',
                     'url':               all_matches[i]['url'],
-                    'last_ball':         "",
+                    'last_ball':         "_",
                     'description':       'Loading',
                     'comms':             'Loading',
                     'international':     i in intl
                     }
 
-            self.match.append(match_info)
+            self.match[i] = match_info
 
-        return self.match
+            if i in intl:
+                intl_matches.append(match_info)
+            else:
+                dom_matches.append(match_info)
 
-    def get_match_data(self, index):
+        return intl_matches, dom_matches
+
+    def get_match_data(self, m_id):
         try:
-            json_data = (requests.get(MATCH_URL(self.match[index]['url']), headers = self.requestParam)).json()
+            json_data = (requests.get(MATCH_URL(self.match[m_id]['url']), headers = self.requestParam)).json()
         except Exception as err:
             print ('Exception: ', err)
-            self.offline = True
-            if self.match == [] or len(self.match) < index:
-                return self.dummy_match_info
+            if self.match == {} or m_id not in self.match:
+                return {}
             else:
-                return self.match[index]
+                return self.match[m_id]
 
-        self.offline = False
-
-        self.match[index]['last_ball'] = ''
+        self.match[m_id]['last_ball'] = "_"
         if json_data['live']['recent_overs']:
-            self.match[index]['last_ball'] = (json_data['live']['recent_overs'][-1][-1]['ball']).replace('&bull;', '0')
+            self.match[m_id]['last_ball'] = (json_data['live']['recent_overs'][-1][-1]['ball']).replace('&bull;', '0')
 
         """
         split description into parts.
@@ -159,9 +136,9 @@ class espn_scrap:
             Jun 10-14
             2015
         """
-        #self.match[index]['description'] = '\n'.join(json_data['description'].replace(',', '\n'))
+        #self.match[m_id]['description'] = '\n'.join(json_data['description'].replace(',', '\n'))
         # HACK: assumes a single space is followed by ','; replace if above line in case of failure
-        self.match[index]['description'] = json_data['description'].replace(', ', '\n')
+        self.match[m_id]['description'] = json_data['description'].replace(', ', '\n')
 
         match_summary = "\n" + json_data['live']['status'] + "\n" +\
                               (json_data['live']['break'] + "\n" if json_data['live']['break'] != "" else "")
@@ -198,9 +175,9 @@ class espn_scrap:
                                                     economy     = x['economy_rate']
                                             ) for x in json_data['centre']['bowling']])
 
-        self.match[index]['scorecard_summary'] = match_summary
+        self.match[m_id]['scorecard_summary'] = match_summary
 
-        self.match[index]['comms'] = ""
+        self.match[m_id]['comms'] = ""
         # NOTE: 'comms' field is not available in domestic matches, check before use
         #match_comm = ""
         #for x in json_data['comms'][0]['ball']:
@@ -222,6 +199,6 @@ class espn_scrap:
         #        match_comm += (x['overs_actual'] + " "  + x['players'] + " : " + " " +  x['event'] + x['dismissal']  +x['text']).rstrip()
         #        match_comm += '\n'
 
-        #self.match[index]['comms'] = match_comm
+        #self.match[m_id]['comms'] = match_comm
 
-        return self.match[index]
+        return self.match[m_id]
