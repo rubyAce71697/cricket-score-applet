@@ -145,6 +145,11 @@ class espn_scrap:
 
         # NOTE: there's also json_data['innings'] which is an array of all the innings; 'live':'innings' only tracks the current one
         if json_data['live']['innings']:        # in case match hasn't started yet
+            match_summary += "\n{team_name}: {score}/{wickets}".format(\
+                                team_name = [t['team_name'] for t in json_data['team'] if t['team_id'] == json_data['live']['innings']['team_id']][0],
+                                score     = json_data['live']['innings']['runs'],
+                                wickets   = json_data['live']['innings']['wickets']
+                                )
             if json_data['live']['recent_overs']:   # some domestic matches don't have 'recent_overs'
                 match_summary += "\nOver (" + json_data['live']['innings']['overs'] + "): " +\
                              " | ".join([ x['ball'].replace('&bull;', '0') +\
@@ -157,7 +162,7 @@ class espn_scrap:
             # TODO: figure out a better method (tabular?) for displaying this data
             if json_data['centre']['batting']:
                 match_summary += "\n\nBatsman:   runs (balls)\n" +\
-                                 "\n".join([ "{player_name:<12} {runs:>4} ({balls:^5})".format( \
+                                 "\n".join([ "{player_name:<12} {runs:>4} ({balls:^5})".format(\
                                                     # NOTE: in some cases 'popular_name' may be empty, so using 'known_as' instead
                                                     player_name = (x['popular_name'] if x['popular_name'] else x['known_as']) + ("*" if x['live_current_name'] == "striker" else ""),
                                                     runs        = x['runs'],
