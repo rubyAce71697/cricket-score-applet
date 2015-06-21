@@ -1,23 +1,17 @@
-"""
-Created on 06-Jun-2015
+#!/usr/bin/env python3
 
-@author: nishant
-"""
-
-from gi.repository import Gtk, GObject
+from gi.repository import Gtk, GObject, GdkPixbuf
 from gi.repository import AppIndicator3 as appindicator
 
 from os import path
-import thread
+import threading
 import time
 import signal
 
 from espn_scrap import espn_scrap
-from about import About
 
-REFRESH_TIMEOUT = 5 # second(s)
-APP_ID = "espn-indicator"
-ICON_PATH = path.join(path.abspath(path.curdir), "screenshots/default_white.png")
+REFRESH_TIMEOUT = 3 # second(s)
+ICON_PATH = path.join(path.abspath(path.curdir), "icons/")
 
 class espn_ind:
     def __init__(self):
@@ -25,287 +19,266 @@ class espn_ind:
         Initialize appindicator and other menus
         """
 
-        self.indicator = appindicator.Indicator.new(APP_ID, ICON_PATH, appindicator.IndicatorCategory.APPLICATION_STATUS)
+        self.indicator = appindicator.Indicator.new("cricket-indicator",
+                                                ICON_PATH + "default_white.png",
+                                                appindicator.IndicatorCategory.APPLICATION_STATUS)
         self.indicator.set_status(appindicator.IndicatorStatus.ACTIVE)
 
         self.scrap = espn_scrap()
 
-        # TODO: remove toggle
-        self.toggle = True
-        # create the menu and submenu
+        # the 'id' of match selected for display as indicator label
+        self.ind_label_match_id = None
+        self.indicator.set_label("Loading", "")
 
-        self.label_disp_index = 1
-        self.label_clas = 0
-
-        self.menu_setup()
-
+        self.menu = self.menu_setup()
         self.indicator.set_menu(self.menu)
+
+        thread = threading.Thread(target=self.update_data)
+        thread.daemon = True
+        thread.start()
 
     def menu_setup(self):
         """
         Setup the Gtk menu of the indicator
         """
 
-        self.menu = Gtk.Menu()
+        intl_header = Gtk.MenuItem.new_with_label("INTERNATIONAL")
+        intl_header.set_sensitive(False)
+        intl_header.show()
 
-        matches_summary = self.scrap.get_matches_summary()
-        self.match_menu = []
-        self.intl_menu = []
-        self.intl_menu.append({
-            'label':      Gtk.MenuItem("INTERNATIONAL"),
-            'label_text': "INTERNATIONAL", })
+        self.intl_menu = [ {'gtk_menu':intl_header} ]
 
-        self.intl_menu[0]['label'].set_sensitive(False)
+        dom_header = Gtk.MenuItem.new_with_label("DOMESTIC")
+        dom_header.set_sensitive(False)
+        dom_header.show()
 
-        self.dom_menu = []
-        self.dom_menu.append({
-            'label':      Gtk.MenuItem("DOMESTIC"),
-            'label_text': "DOMESTIC", })
-        self.dom_menu[0]['label'].set_sensitive(False)
-        intl = 1
-        dom = 1
+        self.dom_menu = [ {'gtk_menu':dom_header} ]
 
-        i = 0
-        for match_info in matches_summary:
-            self.match_item = {}
+        intl_matches, dom_matches = self.scrap.get_matches_summary()
+        for match_info in intl_matches + dom_matches:
+            match_item = self.create_match_item(match_info)
 
-            self.match_item = {
-                    'label':           Gtk.ImageMenuItem(Gtk.STOCK_NEW, match_info['score_summary']),
-                    'label_text':      match_info['score_summary'],
-                    'url':             match_info['url'],
-                    'submenu':         Gtk.Menu(),
-                    'show':            Gtk.MenuItem("Set as Label"),
-                    'description':     "Loading",
-                    'ball':            "Loading",
-                    'gtk_description': Gtk.MenuItem("Loading"),
-                    'scorecard':       Gtk.MenuItem("Loading"),
-                    'scorecard_text':  "Loading" ,
-                    'gtk_commentary':  Gtk.MenuItem("To be updated"),
-                    'commentary_text': "To be updated",
-                    'international':   match_info['international'],
-            }
-
-            self.match_item['show'].connect("activate",self.show_clicked, not match_info['international'],intl,dom, match_info['ball'])
-            self.match_item['scorecard'].set_sensitive(False)
-            #self.menu.append(self.match_item['label'])
-            self.match_item['submenu'].append(self.match_item['show'])
-            self.match_item['submenu'].append(self.match_item['gtk_description'])
-            self.match_item['submenu'].append(self.match_item['scorecard'])
-            self.match_item['submenu'].append(self.match_item['gtk_commentary'])
-            self.match_item['label'].set_submenu(self.match_item['submenu'])
-            img = Gtk.Image()
-            img.set_from_file(path.join(path.abspath(path.curdir), "screenshots/default_white.png"))
-            self.match_item['label'].set_image(img)
-            self.match_item['label'].set_always_show_image(True)
-
-            # make a list to keep them all togther
-            ##self.match_menu.append(self.match_item)
-            if(match_info['international']):
-                self.intl_menu.append(self.match_item)
-                intl+=1
+            if match_info['international']:
+                self.intl_menu.append(match_item)
             else:
-                self.dom_menu.append(self.match_item)
-                dom+=1
+                self.dom_menu.append(match_item)
 
-            i += 1
+            if self.ind_label_match_id is None:
+                self.ind_label_match_id = match_info['id']
 
-        
-        self.match_menu.append(self.intl_menu)
-        self.match_menu.append(self.dom_menu)
-        
-        self.intl_menu[0]['label'].show()
-        self.dom_menu[0]['label'].show()
-        for x in self.match_menu:
-            for y in x :
-                self.menu.append(y['label'])
+        menu = Gtk.Menu.new()
 
-        #print self.match_menu
-        self.menu.show_all()
+        for m in self.intl_menu:
+            menu.append(m['gtk_menu'])
 
-        #option to show submenu
-        self.submenu_item = Gtk.MenuItem("Hide SubMenu")
+        for m in self.dom_menu:
+            menu.append(m['gtk_menu'])
 
-        self.menu.append(self.submenu_item)
-        self.submenu_item.show()
+        # separate out matches from "About" and "Quit"
+        sep_item = Gtk.SeparatorMenuItem.new()
+        sep_item.show()
+        menu.append(sep_item)
 
-        self.submenu_item.connect("activate",self.set_submenu_visibile)
-
-        #you have to attatch the window in future
-        #self.preferences_item = Gtk.MenuItem("Preferences <beware its not working>")
-        #self.menu.append(self.preferences_item)
-        #self.preferences_item.show()
-
-        self.about_item = Gtk.MenuItem("About")
-        self.menu.append(self.about_item)
-        self.about_item.show()
-        self.about_item.connect("activate",self.about)
+        # some self promotion
+        about_item = Gtk.MenuItem("About")
+        about_item.connect("activate",self.about)
+        about_item.show()
+        menu.append(about_item)
 
         #we need a way to quit if the indicator is irritating ;)
-        self.quit_item = Gtk.MenuItem("Quit")
-        self.quit_item.connect("activate", self.quit)
+        quit_item = Gtk.MenuItem("Quit")
+        quit_item.connect("activate", self.quit)
+        quit_item.show()
+        menu.append(quit_item)
 
-        self.menu.append(self.quit_item)
-        self.quit_item.show()
+        return menu
 
-        while Gtk.events_pending():
-            Gtk.main_iteration_do(False)
+    def create_match_item(self, match_info):
+        match_item = {
+                # GTK stuff
+                'gtk_menu':        Gtk.ImageMenuItem.new_with_label(match_info['score_summary']),
+                # NOTE: Gtk.ImageMenuItem has been deprecated in GTK 3.10
+                'gtk_submenu':     Gtk.Menu.new(),
+                'gtk_show':        Gtk.MenuItem.new_with_label("Set as label"),
+                'gtk_description': Gtk.MenuItem.new_with_label(match_info['description']),
+                'gtk_scorecard':   Gtk.MenuItem.new_with_label(match_info['scorecard_summary']),
+                'gtk_commentary':  Gtk.MenuItem.new_with_label(match_info['comms']),
+                # our stuff
+                'id':              match_info['id'],
+                'url':             match_info['url']
+                }
 
-        thread.start_new_thread(self.update_scores, ())
-        thread.start_new_thread(self.update_submenu, ())
+        match_item['gtk_menu'].set_image(Gtk.Image.new_from_file(ICON_PATH + match_info['last_ball'] + ".png"))
+        match_item['gtk_menu'].set_always_show_image(True)
+
+        # OK, this one is not direct
+        # we're using the submenu's title for storing indicator's labelling data i.e. score + last ball result + id of the match
+        # this is needed because when the user clicks on 'set as label', the callback only gets the corresponding widget's ptr
+        # by storing data this we can avoid expensive search operation in the callback
+        # see the 'show_clicked' func for more
+        match_item['gtk_submenu'].set_title('\n'.join([match_info['score_summary'], match_info['last_ball'], match_info['id']]))
+        match_item['gtk_show'].connect("activate",self.show_clicked)
+
+        match_item['gtk_description'].set_sensitive(False)
+        match_item['gtk_scorecard'].set_sensitive(False)
+        match_item['gtk_commentary'].set_sensitive(False)
+
+        match_item['gtk_submenu'].append(match_item['gtk_show'])
+        match_item['gtk_submenu'].append(match_item['gtk_description'])
+        match_item['gtk_submenu'].append(match_item['gtk_scorecard'])
+        match_item['gtk_submenu'].append(match_item['gtk_commentary'])
+
+        match_item['gtk_menu'].set_submenu(match_item['gtk_submenu'])
+
+        match_item['gtk_menu'].show_all()
+
+        return match_item
 
     def quit(self, widget):
         Gtk.main_quit()
 
-    def about(self,widget):
-    	About().display()
+    def about(self, widget):
+    	dialog = Gtk.AboutDialog.new()
+    	# fixes the "mapped without transient parent" warning
+    	dialog.set_transient_for(widget.get_parent().get_parent())
 
-    def show_clicked(self,widget, clas, intl, dom, icon_name):
-        if not clas:
-            self.label_disp_index = intl
-        else:
-            self.label_disp_index = dom
-        
-        GObject.idle_add(self.set_indicator_status,clas, icon_name)
+    	dialog.set_program_name("ESPN Indicator")
+    	dialog.add_credit_section("Authors:", ['Nishant Kukreja (github.com/rubyace71697)', 'Abhishek Rose (github.com/rawcoder)'])
+    	dialog.set_license_type(Gtk.License.GPL_3_0)
+    	dialog.set_website("https://github.com/rubyAce71697/cricket-score-applet")
+    	dialog.set_website_label("Github page")
+    	dialog.set_comments("Displays live scores from ESPN website in your indicator panel")
+    	dialog.set_logo(GdkPixbuf.Pixbuf.new_from_file(ICON_PATH + "default_black" + ".png"))
 
-    def set_submenu_visibile(self,widget):
-        self.toggle = not self.toggle
-        if(self.toggle):
-            #self.preferences_item.show()
-            for match in self.match_menu:
-                for category_match in match:
-                    if 'submenu' in category_match:
-                        category_match['gtk_description'].show()
-                        category_match['gtk_commentary'].show()
-                        category_match['scorecard'].show()
+    	dialog.run()
+    	dialog.destroy()
 
-            self.submenu_item.set_label("Hide Submenu")
-            #print self.toggle
-        else:
-            #self.preferences_item.hide()
-            for match in self.match_menu:
-                for category_match in match:
-                    if 'submenu' in category_match:
-                        category_match['gtk_description'].hide()
-                        category_match['gtk_commentary'].hide()
-                        category_match['scorecard'].hide()
+    def show_clicked(self, widget):
+        """
+        Callback for 'set as label' menuitem
+        """
+        # retriveve the stored data from submenu, 'set as label' menuitem's parent
+        label, icon, m_id = widget.get_parent().get_title().split('\n')
+        # the user has selected this 'm_id' as current label, so we remember it
+        self.ind_label_match_id = m_id
+        self.set_indicator_label(label)
+        self.set_indicator_icon(icon)
 
-            self.submenu_item.set_label("Show Submenu")
+    def set_indicator_label(self, label):
+        self.indicator.set_label(label, "")
 
-    def update_scores(self):
+    def set_indicator_icon(self, icon):
+        self.indicator.set_icon(ICON_PATH + icon + ".png")
+
+    def update_data(self):
         while True:
+            #print "Updating stuff",
             self.update_labels()
-            time.sleep(REFRESH_TIMEOUT-3)
-
-    def update_submenu(self):
-        while True:
-            self.check_submenu()
-            time.sleep(REFRESH_TIMEOUT-3)
+            self.update_sublabels()
+            #print "...  done"
+            time.sleep(REFRESH_TIMEOUT)
 
     def update_labels(self):
-        matches_summary = self.scrap.get_matches_summary()
-        j = 0
-        dom = 1
-        intl = 1
-        clas = ""
+        """
+        Fetch the current matches' summary and update the menuitems
+        may be add or remove menuitems as per the fetched data
+        """
+        intl_matches, dom_matches = self.scrap.get_matches_summary()
 
-        for match_info in matches_summary:
-            # update the indicaror status
+        # remove items
+        while len(self.intl_menu) > 1 and len(self.intl_menu)-1 > len(intl_matches):
+            # GTK updates shouldn't be done in a separate thread, so we our update to idle queue
+            GObject.idle_add(self.remove_menu, (self.intl_menu.pop())['gtk_menu'])
+
+        while len(self.dom_menu) > 1 and len(self.dom_menu)-1 > len(dom_matches):
+            GObject.idle_add(self.remove_menu, (self.dom_menu.pop())['gtk_menu'])
+
+        # add items
+        while len(self.intl_menu)-1 < len(intl_matches):
+            match_item = self.create_match_item(intl_matches[0])
+            GObject.idle_add(self.add_menu, match_item['gtk_menu'], 1)
+            self.intl_menu.append(match_item)
+
+        while len(self.dom_menu)-1 < len(dom_matches):
+            match_item = self.create_match_item(dom_matches[0])
+            GObject.idle_add(self.add_menu, match_item['gtk_menu'], len(self.intl_menu) + 1)
+            self.dom_menu.append(match_item)
+
+        intl, dom = 1, 1
+        m_id_set = False
+        for match_info in intl_matches + dom_matches:
             if match_info['international']:
-                self.intl_menu[intl]['label_text']= str(match_info['score_summary'])
+                self.intl_menu[intl]['id'] = match_info['id']
                 self.intl_menu[intl]['url'] = match_info['url']
-                self.intl_menu[intl]['international'] = match_info['international']
-                clas = 0
 
-                GObject.idle_add(self.set_menu_item, clas,intl, match_info['score_summary'])
-
-                if intl == self.label_disp_index and self.label_clas == clas:
-                    GObject.idle_add(self.set_indicator_status , clas , self.intl_menu[intl]['ball'])
+                GObject.idle_add(self.set_menu_label, self.intl_menu[intl]['gtk_menu'], match_info['score_summary'])
 
                 intl += 1
             else:
-                self.dom_menu[dom]['label_text'] = str(match_info['score_summary'])
+                self.dom_menu[dom]['id'] = match_info['id']
                 self.dom_menu[dom]['url'] = match_info['url']
-                self.dom_menu[dom]['international'] = match_info['international']
-                clas = 1
 
-                GObject.idle_add(self.set_menu_item, clas,dom, match_info['score_summary'])
-
-                if dom == self.label_disp_index and self.label_clas == clas :
-                    GObject.idle_add(self.set_indicator_status , clas, self.dom_menu[dom]['ball'] )
+                GObject.idle_add(self.set_menu_label, self.dom_menu[dom]['gtk_menu'], match_info['score_summary'])
 
                 dom += 1
 
-    def set_menu_item(self,clas, index,label_text):
-        self.match_menu[clas][index]['label'].set_label(label_text)
+            if self.ind_label_match_id is None or match_info['id'] == self.ind_label_match_id:
+                GObject.idle_add(self.set_indicator_label, match_info['score_summary'])
+                m_id_set = True
 
-    def set_indicator_status(self,clas, icon_name):
-        self.label_clas = clas
-        self.indicator.set_label(self.match_menu[self.label_clas][self.label_disp_index]['label_text'], "")
-        if icon_name == "":
-            icon_name = "default_white"
-        self.indicator.set_icon(path.join(path.abspath(path.curdir), "screenshots", icon_name + ".png"))
+        # we don't want the indicator label to point at old stuff
+        if not m_id_set:
+            if len(self.intl_menu) > 1:
+                self.ind_label_match_id = self.intl_menu[1]['id']
+                GObject.idle_add(self.set_indicator_label, self.intl_menu[1]['gtk_menu'].get_label())
+            elif len(self.dom_menu) > 1:
+                self.ind_label_match_id = self.dom[1]['id']
+                GObject.idle_add(self.set_indicator_label, self.dom_menu[1]['gtk_menu'].get_label())
+            else:
+                self.ind_label_match_id = None
+                GObject.idle_add(self.set_indicator_label, "Nothings")
 
-    def set_submenu_item(self, clas, index , scorecard_text ):
-        self.match_menu[clas][index]['scorecard'].set_label( scorecard_text)
+    def update_sublabels(self):
+        """
+        update the scorecard, commentary text for each match
+        """
+        for m in self.intl_menu[1:] + self.dom_menu[1:]:
+            match_info = self.scrap.get_match_data(m['id'])
 
-    def set_description(self,clas, index, description_text):
-        self.match_menu[clas][index]['gtk_description'].set_label(description_text)
+            # may be lost connection or something bad happened
+            if match_info == {}:
+                continue
+            # used when 'set_as_label' button is clicked
+            m['gtk_submenu'].set_title('\n'.join([match_info['score_summary'], match_info['last_ball'], match_info['id']]))
 
-    def update_icon(self,clas, index, icon_name):
-        if icon_name == "":
-            icon_name = "default_white"
+            GObject.idle_add(self.update_menu_icon, m['gtk_menu'], match_info['last_ball'])
+            GObject.idle_add(self.set_submenu_items, m, match_info['scorecard_summary'], match_info['description'], match_info['comms'])
 
-        #print "update_icon: \"{icon_name}\"".format(icon_name=icon_name)
-        img = Gtk.Image()
-        img.set_from_file(path.join(path.abspath(path.curdir), "screenshots", icon_name + ".png"))
-        self.match_menu[clas][index]['label'].set_image(img)
+            if match_info['id'] == self.ind_label_match_id:
+                GObject.idle_add(self.set_indicator_icon, match_info['last_ball'])
 
-    def set_commentary(self, clas, index, commentary_text):
-        self.match_menu[clas][index]['gtk_commentary'].set_label(commentary_text)
+    def add_menu(self, widget, pos):
+        widget.show()
+        self.menu.insert(widget, pos)
 
-    def  check_submenu(self):
-        match_info = {}
-        intl = 1
-        dom = 1
-        j = 0
+    def remove_menu(self, widget):
+        self.menu.remove(widget)
 
-        for match in self.match_menu:
-            for  category_match in match:
-                if('url' in category_match):
-                    match_info = self.scrap.get_match_data(j)
+    def set_menu_label(self, widget, label):
+        widget.set_label(label)
 
-                    if match_info['international']:
-                        self.intl_menu[intl]['scorecard_text']= str(match_info['scorecard_summary'])
-                        self.intl_menu[intl]['description'] = match_info['description']
-                        self.intl_menu[intl]['international'] = match_info['international']
-                        self.intl_menu[intl]['ball'] = match_info['ball']
-                        self.intl_menu[intl]['scorecard_summary'] = match_info['scorecard_summary']
-                        #print self.intl_menu[intl]
-                        clas = 0
-                        GObject.idle_add(self.update_icon, clas, intl , str(match_info['ball']))
-                        GObject.idle_add(self.set_submenu_item , clas, intl ,match_info['scorecard_summary'])
-                        GObject.idle_add(self.set_description , clas, intl ,match_info['description'])
-                        GObject.idle_add(self.set_commentary, clas, intl ,match_info['comms'])
-                        intl += 1
-                    else:
-                        self.dom_menu[dom]['scorecard_text']= str(match_info['scorecard_summary'])
-                        self.dom_menu[dom]['description'] = match_info['description']
-                        self.dom_menu[dom]['international'] = match_info['international']
-                        self.dom_menu[dom]['ball'] = match_info['ball']
-                        self.dom_menu[dom]['scorecard_summary'] = match_info['scorecard_summary']
-                        #print self.dom_menu[dom]
-                        clas = 1
-                        GObject.idle_add(self.update_icon, clas, dom , str(match_info['ball']))
-                        GObject.idle_add(self.set_submenu_item , clas, dom ,match_info['scorecard_summary'])
-                        GObject.idle_add(self.set_description , clas, dom ,match_info['description'])
-                        GObject.idle_add(self.set_commentary, clas, dom ,match_info['comms'])
+    def set_submenu_items(self, match_item, scorecard_text, description_text, commentary_text):
+        match_item['gtk_scorecard'].set_label( scorecard_text)
+        match_item['gtk_description'].set_label(description_text)
+        match_item['gtk_commentary'].set_label(commentary_text)
 
-                        dom += 1
-                    j += 1
+    def update_menu_icon(self, widget, icon):
+        widget.set_image(Gtk.Image.new_from_file(ICON_PATH + icon + ".png"))
+
 
 if __name__ == "__main__":
     signal.signal(signal.SIGINT, signal.SIG_DFL)
-    GObject.threads_init()
+    #GObject.threads_init()     # not needed for GTK version > 3.10
 
     myIndicator = espn_ind()
     Gtk.main()
