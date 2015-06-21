@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import requests
 
 BASE_URL = "http://espncricinfo.com"
@@ -58,7 +59,7 @@ class espn_scrap:
 
         intl = []
         for x in summary['modules']['www']:
-            if x['category'] == 'intl':
+            if x['title'] == 'International':
                 intl.extend(x['matches'])
 
         all_matches = summary['matches']
@@ -188,7 +189,8 @@ class espn_scrap:
                                                         overs     = x['overs_actual'],
                                                         players   = x['players'],
                                                         event     = x['event'],
-                                                        dismissal = ("\n\t" + x['dismissal'].replace("&amp;","&").replace("&nbsp;"," ").replace("&bull;","0")) if x['dismissal'] != "" else "",
+                                                        # HTML character entity references are *evil*
+                                                        dismissal = ("\n\t" + x['dismissal'].replace("&amp;","&").replace("&nbsp;"," ").replace("&bull;","0").replace("&dagger;", "†")) if x['dismissal'] != "" else "",
                                                         ) for x in json_data['comms'][0]['ball'] if 'event' in x])
 
         return self.match[m_id]

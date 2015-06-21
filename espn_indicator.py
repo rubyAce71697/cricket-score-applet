@@ -1,10 +1,10 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 from gi.repository import Gtk, GObject, GdkPixbuf
 from gi.repository import AppIndicator3 as appindicator
 
 from os import path
-import thread
+import threading
 import time
 import signal
 
@@ -33,7 +33,9 @@ class espn_ind:
         self.menu = self.menu_setup()
         self.indicator.set_menu(self.menu)
 
-        thread.start_new_thread(self.update_data, ())
+        thread = threading.Thread(target=self.update_data)
+        thread.daemon = True
+        thread.start()
 
     def menu_setup(self):
         """
@@ -137,8 +139,8 @@ class espn_ind:
 
     def about(self, widget):
     	dialog = Gtk.AboutDialog.new()
-        # fixes the "mapped without transient parent" warning
-        dialog.set_transient_for(widget.get_parent().get_parent())
+    	# fixes the "mapped without transient parent" warning
+    	dialog.set_transient_for(widget.get_parent().get_parent())
 
     	dialog.set_program_name("ESPN Indicator")
     	dialog.add_credit_section("Authors:", ['Nishant Kukreja (github.com/rubyace71697)', 'Abhishek Rose (github.com/rawcoder)'])
