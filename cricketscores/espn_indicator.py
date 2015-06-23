@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/python3
 
 from gi.repository import Gtk, GObject, GdkPixbuf
 from gi.repository import AppIndicator3 as appindicator
@@ -7,11 +7,13 @@ from os import path
 import threading
 import time
 import signal
+import sys
 
 from espn_scrap import espn_scrap
 
 REFRESH_TIMEOUT = 3 # second(s)
-ICON_PATH = path.join(path.abspath(path.curdir), "icons/")
+ICON_PATH = sys.prefix + "/local/cric_icons/"
+
 
 class espn_ind:
     def __init__(self):
@@ -23,7 +25,7 @@ class espn_ind:
                                                 ICON_PATH + "default_white.png",
                                                 appindicator.IndicatorCategory.APPLICATION_STATUS)
         self.indicator.set_status(appindicator.IndicatorStatus.ACTIVE)
-
+        
         self.scrap = espn_scrap()
 
         # the 'id' of match selected for display as indicator label
@@ -85,6 +87,7 @@ class espn_ind:
         about_item.show()
         menu.append(about_item)
 
+        
         #we need a way to quit if the indicator is irritating ;)
         quit_item = Gtk.MenuItem("Quit")
         quit_item.connect("activate", self.quit)
@@ -105,9 +108,10 @@ class espn_ind:
                 'gtk_commentary':  Gtk.MenuItem.new_with_label(match_info['comms']),
                 # our stuff
                 'id':              match_info['id'],
-                'url':             match_info['url']
+                'url':             match_info['url'],
+                'status':        ""
                 }
-
+        
         match_item['gtk_menu'].set_image(Gtk.Image.new_from_file(ICON_PATH + match_info['last_ball'] + ".png"))
         match_item['gtk_menu'].set_always_show_image(True)
 
@@ -136,6 +140,8 @@ class espn_ind:
 
     def quit(self, widget):
         Gtk.main_quit()
+    
+
 
     def about(self, widget):
     	dialog = Gtk.AboutDialog.new()
@@ -159,24 +165,40 @@ class espn_ind:
         """
         # retriveve the stored data from submenu, 'set as label' menuitem's parent
         label, icon, m_id = widget.get_parent().get_title().split('\n')
+        """
+        print
+        print widget.get_parent().get_title()
+        print widget.get_parent().get_title().split('\n')
+        print label
+        print icon
+        print m_id
+        """
+
+
         # the user has selected this 'm_id' as current label, so we remember it
+
         self.ind_label_match_id = m_id
         self.set_indicator_label(label)
         self.set_indicator_icon(icon)
 
     def set_indicator_label(self, label):
         self.indicator.set_label(label, "")
+        
+
 
     def set_indicator_icon(self, icon):
         self.indicator.set_icon(ICON_PATH + icon + ".png")
 
     def update_data(self):
         while True:
+            
+            turn = 1
             #print "Updating stuff",
             self.update_labels()
+
             self.update_sublabels()
             #print "...  done"
-            time.sleep(REFRESH_TIMEOUT)
+            #no need to add sleep already it is slow
 
     def update_labels(self):
         """
@@ -248,9 +270,18 @@ class espn_ind:
             # may be lost connection or something bad happened
             if match_info == {}:
                 continue
+            status = ""
             # used when 'set_as_label' button is clicked
+             
             m['gtk_submenu'].set_title('\n'.join([match_info['score_summary'], match_info['last_ball'], match_info['id']]))
 
+            #print (match_info['score_summary'])
+            #print (match_info['last_ball'])
+            #print (match_info['description'])
+            if('won by' in match_info['scorecard_summary']):
+                match_info['last_ball'] = "won"
+                
+    			
             GObject.idle_add(self.update_menu_icon, m['gtk_menu'], match_info['last_ball'])
             GObject.idle_add(self.set_submenu_items, m, match_info['scorecard_summary'], match_info['description'], match_info['comms'])
 
@@ -268,11 +299,14 @@ class espn_ind:
         widget.set_label(label)
 
     def set_submenu_items(self, match_item, scorecard_text, description_text, commentary_text):
+    	
+
         match_item['gtk_scorecard'].set_label( scorecard_text)
         match_item['gtk_description'].set_label(description_text)
         match_item['gtk_commentary'].set_label(commentary_text)
 
     def update_menu_icon(self, widget, icon):
+    	#print (ICON_PATH + icon + ".png")
         widget.set_image(Gtk.Image.new_from_file(ICON_PATH + icon + ".png"))
 
 

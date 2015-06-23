@@ -1,4 +1,6 @@
+#!/usr/bin/ python3
 # -*- coding: utf-8 -*-
+
 import requests
 
 BASE_URL = "http://espncricinfo.com"
@@ -59,7 +61,7 @@ class espn_scrap:
 
         intl = []
         for x in summary['modules']['www']:
-            if x['title'] == 'International':
+            if x['category'] == 'intl':
                 intl.extend(x['matches'])
 
         all_matches = summary['matches']
@@ -146,11 +148,15 @@ class espn_scrap:
 
         # NOTE: there's also json_data['innings'] which is an array of all the innings; 'live':'innings' only tracks the current one
         if json_data['live']['innings']:        # in case match hasn't started yet
-            match_summary += "\n{team_name}: {score}/{wickets}".format(\
+            match_summary += "\n{team_name}: {score}/{wickets}            Curr RR: {run_rate}       Req RR: {required_run_rate}".format(\
                                 team_name = [t['team_name'] for t in json_data['team'] if t['team_id'] == json_data['live']['innings']['team_id']][0],
                                 score     = json_data['live']['innings']['runs'],
-                                wickets   = json_data['live']['innings']['wickets']
+                                wickets   = json_data['live']['innings']['wickets'],
+                                run_rate  = json_data['live']['innings']['run_rate'],
+                                required_run_rate = json_data['live']['innings']['required_run_rate']
                                 )
+
+
             if json_data['live']['recent_overs']:   # some domestic matches don't have 'recent_overs'
                 match_summary += "\nOver (" + json_data['live']['innings']['overs'] + "): " +\
                              " | ".join([ x['ball'].replace('&bull;', '0') +\
@@ -181,6 +187,28 @@ class espn_scrap:
                                                     economy     = x['economy_rate']
                                             ) for x in json_data['centre']['bowling']])
 
+        else:
+            if(json_data['match']['current_summary']):
+
+                t = json_data['match']['current_summary'].split('(')
+                
+                t = t[1].split(')')
+                
+                t = t[0].split(',')
+                
+                match_summary += "\n\nBatsman:   runs \n" +\
+                                     "\n".join([ "{player_score_ball}".format(\
+                                                        # NOTE: in some cases 'popular_name' may be empty, so using 'known_as' instead
+                                                        player_score_ball = x
+
+                                                        )for x in t[1:-1]])
+
+                match_summary += "\n\nBowlers:   (wickets/runs)\n" +\
+                                     "\n".join([ "{player_score_ball}".format( \
+                                                        player_score_ball = t[-1]
+                                                )])
+
+
         self.match[m_id]['scorecard_summary'] = match_summary
 
         self.match[m_id]['comms'] = ""
@@ -190,7 +218,7 @@ class espn_scrap:
                                                         players   = x['players'],
                                                         event     = x['event'],
                                                         # HTML character entity references are *evil*
-                                                        dismissal = ("\n\t" + x['dismissal'].replace("&amp;","&").replace("&nbsp;"," ").replace("&bull;","0").replace("&dagger;", "†")) if x['dismissal'] != "" else "",
+                                                        dismissal = ("\n\t" + x['dismissal'].replace("&amp;","&").replace("&nbsp;"," ").replace("&bull;","0")) if x['dismissal'] != "" else "",
                                                         ) for x in json_data['comms'][0]['ball'] if 'event' in x])
 
         return self.match[m_id]
