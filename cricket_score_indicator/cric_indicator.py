@@ -252,23 +252,25 @@ class cric_ind:
         update the scorecard, commentary text for each match
         """
         for m in self.intl_menu[1:] + self.dom_menu[1:]:
-            match_info = self.scrap.get_match_data(m['id'])
+            threading.Thread(target = self.update_menu_data, args = m).start()
 
-            # maybe lost connection or something bad happened
-            if match_info == {}:
-                continue
+    def update_menu_data(self, m):
+        match_info = self.scrap.get_match_data(m['id'])
 
-            # used when 'set_as_label' button is clicked
-            m['gtk_submenu'].set_title('\n'.join([match_info['score_summary'], match_info['last_ball'], match_info['id']]))
+        #maybe lost connection or something bad happened
+        if match_info == {}:
+            return
 
-            if 'won by' in match_info['scorecard_summary']:
-                match_info['last_ball'] = "won"
+        # used when 'set_as_label' button is clicked
+        m['gtk_submenu'].set_title('\n'.join([match_info['score_summary'], match_info['last_ball'], match_info['id']]))
 
-            GObject.idle_add(self.update_menu_icon, m['gtk_menu'], match_info['last_ball'])
-            GObject.idle_add(self.set_submenu_items, m, match_info['scorecard_summary'], match_info['description'], match_info['comms'])
+        if('won by' in match_info['scorecard_summary']):
+            match_info['last_ball'] = "won"
 
-            if match_info['id'] == self.ind_label_match_id:
-                GObject.idle_add(self.set_indicator_icon, match_info['last_ball'])
+        GObject.idle_add(self.update_menu_icon, m['gtk_menu'], match_info['last_ball'])
+        GObject.idle_add(self.set_submenu_items, m, match_info['scorecard_summary'], match_info['description'], match_info['comms'])
+        if match_info['id'] == self.ind_label_match_id:
+            GObject.idle_add(self.set_indicator_icon, match_info['last_ball'])
 
     def add_menu(self, widget, pos):
         widget.show()
