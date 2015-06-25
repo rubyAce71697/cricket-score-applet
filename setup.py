@@ -30,6 +30,7 @@ setup(
 	url = "https://github.com/rubyAce71697/cricket-score-applet",
 	package_dir = {"cricscores" : "cricketscores"},
 	packages = ['cricketscores'],
+	package_data = {'cricketscores.icons' : ['*']},
 	include_package_data=True,
 	
 	data_files = [('cric_icons' ,
