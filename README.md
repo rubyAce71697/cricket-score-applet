@@ -9,6 +9,7 @@ Uses the unofficial JSON from [ESPN Website](http://www.espncricinfo.com/) to ge
 
 ## Screenshots
 Shows the live scores in panel
+
 ![](./screenshots/panel_image.png "Label gets updated with latest score")
 
 Menu displays the current matches from the ESPN Cricinfo website.
