@@ -48,7 +48,7 @@ class espn_scrap:
 
     def get_matches_summary(self):
         try:
-            summary = (requests.get(SUMMARY_URL)).json()
+            summary = (requests.get(SUMMARY_URL, timeout = 5)).json()
         except Exception as err:
             print ('get_matches_summary: Exception: ', err)
             if self.match == {}:
@@ -117,7 +117,7 @@ class espn_scrap:
 
     def get_match_data(self, m_id):
         try:
-            json_data = (requests.get(MATCH_URL(self.match[m_id]['url']), headers = self.requestParam)).json()
+            json_data = (requests.get(MATCH_URL(self.match[m_id]['url']), headers = self.requestParam, timeout = 10)).json()
         except Exception as err:
             print ('get_match_data: Exception: ', err)
             return {}
@@ -209,7 +209,7 @@ class espn_scrap:
                                                         players   = x['players'],
                                                         event     = x['event'],
                                                         # HTML character entity references are *evil*
-                                                        dismissal = ("\n\t" + x['dismissal'].replace("&amp;","&").replace("&nbsp;"," ").replace("&bull;","0"))
+                                                        dismissal = ("\n\t" + x['dismissal'].replace("&amp;","&").replace("&nbsp;"," ").replace("&bull;","0").replace("&dagger;", "†"))
                                                                     if x['dismissal'] != "" else "",
                                                         ) for x in json_data['comms'][0]['ball'] if 'event' in x])
 
