@@ -1,0 +1,5 @@
+#!/usr/bin/env python3
+
+import cricket_score_indicator.cric_indicator
+
+cricket_score_indicator.cric_indicator.run()

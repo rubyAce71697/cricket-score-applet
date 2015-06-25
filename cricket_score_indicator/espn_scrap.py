@@ -1,4 +1,3 @@
-#!/usr/bin/ python3
 # -*- coding: utf-8 -*-
 
 import requests
@@ -51,7 +50,7 @@ class espn_scrap:
         try:
             summary = (requests.get(SUMMARY_URL)).json()
         except Exception as err:
-            print ('Exception: ', err)
+            print ('get_matches_summary: Exception: ', err)
             if self.match == {}:
                 return [self.dummy_match_info_intl], [self.dummy_match_info_dom]
             else:
@@ -120,11 +119,8 @@ class espn_scrap:
         try:
             json_data = (requests.get(MATCH_URL(self.match[m_id]['url']), headers = self.requestParam)).json()
         except Exception as err:
-            print ('Exception: ', err)
-            if self.match == {} or m_id not in self.match:
-                return {}
-            else:
-                return self.match[m_id]
+            print ('get_match_data: Exception: ', err)
+            return {}
 
         self.match[m_id]['last_ball'] = "_"
         if json_data['live']['recent_overs']:
@@ -140,7 +136,7 @@ class espn_scrap:
             2015
         """
         #self.match[m_id]['description'] = '\n'.join(json_data['description'].replace(',', '\n'))
-        # HACK: assumes a single space is followed by ','; replace if above line in case of failure
+        # HACK: assumes a single space is followed by ','; replace with above line in case of failure
         self.match[m_id]['description'] = json_data['description'].replace(', ', '\n')
 
         match_summary = "\n" + json_data['live']['status'] + "\n" +\
@@ -148,14 +144,14 @@ class espn_scrap:
 
         # NOTE: there's also json_data['innings'] which is an array of all the innings; 'live':'innings' only tracks the current one
         if json_data['live']['innings']:        # in case match hasn't started yet
-            match_summary += "\n{team_name}: {score}/{wickets}            Curr RR: {run_rate}       Req RR: {required_run_rate}".format(\
-                                team_name = [t['team_name'] for t in json_data['team'] if t['team_id'] == json_data['live']['innings']['team_id']][0],
-                                score     = json_data['live']['innings']['runs'],
-                                wickets   = json_data['live']['innings']['wickets'],
-                                run_rate  = json_data['live']['innings']['run_rate'],
-                                required_run_rate = json_data['live']['innings']['required_run_rate']
+            match_summary += "\n{team_name}: {score}/{wickets}   Curr RR: {run_rate}{required_run_rate}".format(\
+                                team_name         = [t['team_name'] for t in json_data['team'] if t['team_id'] == json_data['live']['innings']['team_id']][0],
+                                score             = json_data['live']['innings']['runs'],
+                                wickets           = json_data['live']['innings']['wickets'],
+                                run_rate          = json_data['live']['innings']['run_rate'],
+                                required_run_rate = "  Required RR: "+json_data['live']['innings']['required_run_rate']\
+                                                    if json_data['live']['innings']['required_run_rate'] is not None else ""
                                 )
-
 
             if json_data['live']['recent_overs']:   # some domestic matches don't have 'recent_overs'
                 match_summary += "\nOver (" + json_data['live']['innings']['overs'] + "): " +\
@@ -171,7 +167,8 @@ class espn_scrap:
                 match_summary += "\n\nBatsman:   runs (balls)\n" +\
                                  "\n".join([ "{player_name:<12} {runs:>4} ({balls:^5})".format(\
                                                     # NOTE: in some cases 'popular_name' may be empty, so using 'known_as' instead
-                                                    player_name = (x['popular_name'] if x['popular_name'] else x['known_as']) + ("*" if x['live_current_name'] == "striker" else ""),
+                                                    player_name = (x['popular_name'] if x['popular_name'] else x['known_as'])\
+                                                                    + ("*" if x['live_current_name'] == "striker" else ""),
                                                     runs        = x['runs'],
                                                     balls       = x['balls_faced']
                                             ) for x in json_data['centre']['batting']])
@@ -179,7 +176,8 @@ class espn_scrap:
             if json_data['centre']['bowling']:
                 match_summary += "\n\nBowlers:   overs-maidens-runs-wickets  economy-rate\n" +\
                                  "\n".join([ "{player_name:<12} {overs} - {maidens} - {runs} - {wickets}  {economy}".format( \
-                                                    player_name = (x['popular_name'] if x['popular_name'] else x['known_as']) + ("*" if x['live_current_name'] == "current bowler" else ""),
+                                                    player_name = (x['popular_name'] if x['popular_name'] else x['known_as'])\
+                                                                    + ("*" if x['live_current_name'] == "current bowler" else ""),
                                                     overs       = x['overs'],
                                                     maidens     = x['maidens'],
                                                     runs        = x['conceded'],
@@ -188,26 +186,19 @@ class espn_scrap:
                                             ) for x in json_data['centre']['bowling']])
 
         else:
-            if(json_data['match']['current_summary']):
+            if json_data['match']['current_summary']:
+                # ['match']['current_summary'] is like this:
+                #       "Pakistan 58/2 (19.6 ov, Mohammad Hafeez 25*, Younis Khan 1*, KTGD Prasad 2/23)"
+                # we need the data inside parenthesis
 
                 t = json_data['match']['current_summary'].split('(')
-                
                 t = t[1].split(')')
-                
                 t = t[0].split(',')
-                
-                match_summary += "\n\nBatsman:   runs \n" +\
-                                     "\n".join([ "{player_score_ball}".format(\
-                                                        # NOTE: in some cases 'popular_name' may be empty, so using 'known_as' instead
-                                                        player_score_ball = x
 
-                                                        )for x in t[1:-1]])
-
-                match_summary += "\n\nBowlers:   (wickets/runs)\n" +\
-                                     "\n".join([ "{player_score_ball}".format( \
-                                                        player_score_ball = t[-1]
-                                                )])
-
+                match_summary += "\n\nBatsman:   runs\n" +\
+                                 "\n".join([ "{player_score_ball}".format(player_score_ball = x)\
+                                            for x in t[1:-1]]) +\
+                                 "\n\nBowlers:   wickets/runs\n{player_score_ball}".format(player_score_ball = t[-1])
 
         self.match[m_id]['scorecard_summary'] = match_summary
 
@@ -218,7 +209,8 @@ class espn_scrap:
                                                         players   = x['players'],
                                                         event     = x['event'],
                                                         # HTML character entity references are *evil*
-                                                        dismissal = ("\n\t" + x['dismissal'].replace("&amp;","&").replace("&nbsp;"," ").replace("&bull;","0")) if x['dismissal'] != "" else "",
+                                                        dismissal = ("\n\t" + x['dismissal'].replace("&amp;","&").replace("&nbsp;"," ").replace("&bull;","0"))
+                                                                    if x['dismissal'] != "" else "",
                                                         ) for x in json_data['comms'][0]['ball'] if 'event' in x])
 
         return self.match[m_id]

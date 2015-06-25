@@ -1,4 +1,4 @@
-# ESPN Indicator
+# Cricket Score Indicator
 Displays live scores from ESPN website in your indicator panel
 
 ## Motivation
