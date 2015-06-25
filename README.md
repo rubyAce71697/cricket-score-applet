@@ -18,5 +18,9 @@ Menu displays the current matches from the ESPN Cricinfo website.
 The icon in the menu and indicator displays the run scored on the last delivery.
 If match is finished (won) it will show a trophy icon.
 
-Submenu shows scorecard (only for international matches such as IND vs AUS)
+Submenu shows scorecard 
 ![](./screenshots/submenu_image.png "Click 'Set as label' to display the scores from this match as the label text in panel")
+
+
+If the match has not been started, then submenu will show the information regarding that match
+![](./screenshots/submenu_info.png "The submenu showing information regarding the match that hasnt been started")
