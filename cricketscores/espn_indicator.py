@@ -265,28 +265,35 @@ class espn_ind:
         update the scorecard, commentary text for each match
         """
         for m in self.intl_menu[1:] + self.dom_menu[1:]:
-            match_info = self.scrap.get_match_data(m['id'])
 
-            # may be lost connection or something bad happened
-            if match_info == {}:
-                continue
-            status = ""
-            # used when 'set_as_label' button is clicked
+            threading.Thread(target = self.getandupdate, args = (m['id'],m)).start()
+
+            
+
+
+
+    def getandupdate(self,id,m):
+        match_info = self.scrap.get_match_data(id)
+
+        #may be lost connection or something bad happened
+        if match_info == {}:
+            return
+        status = ""
+        # used when 'set_as_label' button is clicked
              
-            m['gtk_submenu'].set_title('\n'.join([match_info['score_summary'], match_info['last_ball'], match_info['id']]))
+        m['gtk_submenu'].set_title('\n'.join([match_info['score_summary'], match_info['last_ball'], match_info['id']]))
 
-            #print (match_info['score_summary'])
-            #print (match_info['last_ball'])
-            #print (match_info['description'])
-            if('won by' in match_info['scorecard_summary']):
-                match_info['last_ball'] = "won"
+        #print (match_info['score_summary'])
+        #print (match_info['last_ball'])
+        #print (match_info['description'])
+        if('won by' in match_info['scorecard_summary']):
+            match_info['last_ball'] = "won"
                 
-    			
-            GObject.idle_add(self.update_menu_icon, m['gtk_menu'], match_info['last_ball'])
-            GObject.idle_add(self.set_submenu_items, m, match_info['scorecard_summary'], match_info['description'], match_info['comms'])
-
-            if match_info['id'] == self.ind_label_match_id:
-                GObject.idle_add(self.set_indicator_icon, match_info['last_ball'])
+                
+        GObject.idle_add(self.update_menu_icon, m['gtk_menu'], match_info['last_ball'])
+        GObject.idle_add(self.set_submenu_items, m, match_info['scorecard_summary'], match_info['description'], match_info['comms'])
+        if match_info['id'] == self.ind_label_match_id:
+            GObject.idle_add(self.set_indicator_icon, match_info['last_ball'])
 
     def add_menu(self, widget, pos):
         widget.show()
@@ -316,3 +323,4 @@ if __name__ == "__main__":
 
     myIndicator = espn_ind()
     Gtk.main()
+
