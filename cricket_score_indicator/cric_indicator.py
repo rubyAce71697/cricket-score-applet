@@ -252,7 +252,7 @@ class cric_ind:
         update the scorecard, commentary text for each match
         """
         for m in self.intl_menu[1:] + self.dom_menu[1:]:
-            threading.Thread(target = self.update_menu_data, args = m).start()
+            threading.Thread(target = self.update_menu_data, args = (m,)).start()
 
     def update_menu_data(self, m):
         match_info = self.scrap.get_match_data(m['id'])
