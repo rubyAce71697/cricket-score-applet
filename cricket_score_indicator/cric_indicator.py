@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 
 from gi.repository import Gtk, GObject, GdkPixbuf
 from gi.repository import AppIndicator3 as appindicator
@@ -9,13 +9,12 @@ import time
 import signal
 import sys
 
-from espn_scrap import espn_scrap
+from cricket_score_indicator.espn_scrap import espn_scrap
 
 REFRESH_TIMEOUT = 3 # second(s)
-ICON_PATH = sys.prefix + "/local/cric_icons/"
+ICON_PATH = path.join(path.abspath(path.dirname(__file__)), "icons/")
 
-
-class espn_ind:
+class cric_ind:
     def __init__(self):
         """
         Initialize appindicator and other menus
@@ -25,7 +24,7 @@ class espn_ind:
                                                 ICON_PATH + "default_white.png",
                                                 appindicator.IndicatorCategory.APPLICATION_STATUS)
         self.indicator.set_status(appindicator.IndicatorStatus.ACTIVE)
-        
+
         self.scrap = espn_scrap()
 
         # the 'id' of match selected for display as indicator label
@@ -38,6 +37,11 @@ class espn_ind:
         thread = threading.Thread(target=self.update_data)
         thread.daemon = True
         thread.start()
+
+    def main(self):
+        # handle 'C-c'
+        signal.signal(signal.SIGINT, signal.SIG_DFL)
+        Gtk.main()
 
     def menu_setup(self):
         """
@@ -87,7 +91,6 @@ class espn_ind:
         about_item.show()
         menu.append(about_item)
 
-        
         #we need a way to quit if the indicator is irritating ;)
         quit_item = Gtk.MenuItem("Quit")
         quit_item.connect("activate", self.quit)
@@ -109,9 +112,8 @@ class espn_ind:
                 # our stuff
                 'id':              match_info['id'],
                 'url':             match_info['url'],
-                'status':        ""
                 }
-        
+
         match_item['gtk_menu'].set_image(Gtk.Image.new_from_file(ICON_PATH + match_info['last_ball'] + ".png"))
         match_item['gtk_menu'].set_always_show_image(True)
 
@@ -140,7 +142,7 @@ class espn_ind:
 
     def quit(self, widget):
         Gtk.main_quit()
-    
+
 
 
     def about(self, widget):
@@ -165,39 +167,24 @@ class espn_ind:
         """
         # retriveve the stored data from submenu, 'set as label' menuitem's parent
         label, icon, m_id = widget.get_parent().get_title().split('\n')
-        """
-        print
-        print widget.get_parent().get_title()
-        print widget.get_parent().get_title().split('\n')
-        print label
-        print icon
-        print m_id
-        """
-
 
         # the user has selected this 'm_id' as current label, so we remember it
-
         self.ind_label_match_id = m_id
         self.set_indicator_label(label)
         self.set_indicator_icon(icon)
 
     def set_indicator_label(self, label):
         self.indicator.set_label(label, "")
-        
-
 
     def set_indicator_icon(self, icon):
         self.indicator.set_icon(ICON_PATH + icon + ".png")
 
     def update_data(self):
         while True:
-            
-            turn = 1
-            #print "Updating stuff",
+            #print("Updating stuff")
             self.update_labels()
-
             self.update_sublabels()
-            #print "...  done"
+            #print("...  done")
             #no need to add sleep already it is slow
 
     def update_labels(self):
@@ -209,7 +196,7 @@ class espn_ind:
 
         # remove items
         while len(self.intl_menu) > 1 and len(self.intl_menu)-1 > len(intl_matches):
-            # GTK updates shouldn't be done in a separate thread, so we our update to idle queue
+            # GTK updates shouldn't be done in a separate thread, so we add our update to idle queue
             GObject.idle_add(self.remove_menu, (self.intl_menu.pop())['gtk_menu'])
 
         while len(self.dom_menu) > 1 and len(self.dom_menu)-1 > len(dom_matches):
@@ -267,21 +254,16 @@ class espn_ind:
         for m in self.intl_menu[1:] + self.dom_menu[1:]:
             match_info = self.scrap.get_match_data(m['id'])
 
-            # may be lost connection or something bad happened
+            # maybe lost connection or something bad happened
             if match_info == {}:
                 continue
-            status = ""
+
             # used when 'set_as_label' button is clicked
-             
             m['gtk_submenu'].set_title('\n'.join([match_info['score_summary'], match_info['last_ball'], match_info['id']]))
 
-            #print (match_info['score_summary'])
-            #print (match_info['last_ball'])
-            #print (match_info['description'])
-            if('won by' in match_info['scorecard_summary']):
+            if 'won by' in match_info['scorecard_summary']:
                 match_info['last_ball'] = "won"
-                
-    			
+
             GObject.idle_add(self.update_menu_icon, m['gtk_menu'], match_info['last_ball'])
             GObject.idle_add(self.set_submenu_items, m, match_info['scorecard_summary'], match_info['description'], match_info['comms'])
 
@@ -299,20 +281,16 @@ class espn_ind:
         widget.set_label(label)
 
     def set_submenu_items(self, match_item, scorecard_text, description_text, commentary_text):
-    	
-
         match_item['gtk_scorecard'].set_label( scorecard_text)
         match_item['gtk_description'].set_label(description_text)
         match_item['gtk_commentary'].set_label(commentary_text)
 
     def update_menu_icon(self, widget, icon):
-    	#print (ICON_PATH + icon + ".png")
         widget.set_image(Gtk.Image.new_from_file(ICON_PATH + icon + ".png"))
 
+def run():
+    myIndicator = cric_ind()
+    myIndicator.main()
 
 if __name__ == "__main__":
-    signal.signal(signal.SIGINT, signal.SIG_DFL)
-    #GObject.threads_init()     # not needed for GTK version > 3.10
-
-    myIndicator = espn_ind()
-    Gtk.main()
+    print ("Use 'cricscore_indicator' to run the applet")
