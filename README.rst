@@ -9,23 +9,23 @@ Installation
 
 Install
 -------------------
-**sudo pip install -i https://pypi.python.org/pypi cricket_score_indicator**
+*sudo pip install -i https://pypi.python.org/pypi cricket_score_indicator*
 
 Upgrade
 -------------------
-**sudo pip install --upgrade cricket_score_indicator**
+*sudo pip install --upgrade cricket_score_indicator*
 
 Uninstall
 -------------------
-**sudo pip uninstall cricket_score_indicator**
+*sudo pip uninstall cricket_score_indicator*
 
 ===================
 Usage
 ===================
-From terminal run 
+From terminal run : 
 **cricscore_indicator**
 
-To run indicator in background 
+To run indicator in background :
 **nohup cricscore_indicator &**
 
 
