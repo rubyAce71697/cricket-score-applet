@@ -5,7 +5,7 @@ import sys
 
 setup(
 	name             = "cricket_score_indicator",
-	version          = "3.0.0",
+	version          = "3.2",
 	author           = "Nishant Kukreja and Abhishek Rose",
 	author_email     = "kukreja34@gmail.com",
 	description      = "An indicator to show live cricket(domestic/international) scores",
