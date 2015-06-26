@@ -3,9 +3,12 @@
 from distutils.core import setup
 import sys
 
+if 'bdist_wheel' in sys.argv:
+    raise RuntimeError("This setup.py does not support wheels")
+
 setup(
 	name             = "cricket_score_indicator",
-	version          = "3.2",
+	version          = "3.3",
 	author           = "Nishant Kukreja and Abhishek Rose",
 	author_email     = "kukreja34@gmail.com",
 	description      = "An indicator to show live cricket(domestic/international) scores",
