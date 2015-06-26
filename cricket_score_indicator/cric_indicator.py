@@ -156,7 +156,7 @@ class cric_ind:
     	dialog.set_website("https://github.com/rubyAce71697/cricket-score-applet")
     	dialog.set_website_label("Github page")
     	dialog.set_comments("Displays live scores from ESPN website in your indicator panel")
-    	dialog.set_logo(GdkPixbuf.Pixbuf.new_from_file(ICON_PATH + "default_black" + ".png"))
+    	dialog.set_logo(GdkPixbuf.Pixbuf.new_from_file(ICON_PATH + "cricscore_indicator" + ".svg"))
 
     	dialog.run()
     	dialog.destroy()

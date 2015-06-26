@@ -1,0 +1,12 @@
+#!/usr/bin/env xdg-open
+[Desktop Entry]
+Type=Application
+Name=Cricket Score Indicator
+GenericName=Indicator-Applet
+Comment=Displays live scores from ESPN website in your indicator panel
+TryExec=cricscore_indicator
+Exec=cricscore_indicator
+Icon=cricscore_indicator
+Terminal=false
+Categories=Network;GTK;
+#X-GNOME-Autostart-enabled=true
