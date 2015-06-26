@@ -8,7 +8,7 @@ Installation
 ===================
 
 Install
--------------------
+..................
 .. *sudo pip install -i https://pypi.python.org/pypi cricket_score_indicator*
 
 Upgrade
