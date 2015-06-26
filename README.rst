@@ -1,0 +1,58 @@
+
+Working
+==================
+Uses the unofficial JSON from ESPN Website to get the summary and scorecard for currently active matches
+
+===================
+Installation 
+===================
+
+Install
+-------------------
+**sudo pip install -i https://pypi.python.org/pypi cricket_score_indicator**
+
+Upgrade
+-------------------
+**sudo pip install --upgrade cricket_score_indicator**
+
+Uninstall
+-------------------
+**sudo pip uninstall cricket_score_indicator**
+
+===================
+Usage
+===================
+From terminal run 
+**cricscore_indicator**
+
+To run indicator in background 
+**nohup cricscore_indicator &**
+
+
+===================
+Features
+===================
+* shows current score as indicator
+* updated as soon as espncricinfo is updated
+* in submenu it shows the scorecard of corresponding match
+* Categories for International and Domestic matches
+* Option to set a particular match score as indicator label
+* Adds new match as it is available and deletes the unavailable ones
+* Icon shows the runs scored on the last delivery of the match 
+
+
+
+:Homepage: `Github Page <https://github.com/rubyAce71697/cricket-score-applet>`_.
+
+===================
+Screenshots
+===================
+.. image:: screenshots/panel_image.png
+.. image:: screenshots/mainmenu_image.png
+.. image:: screenshots/submenu_image.png
+
+===================
+License
+===================
+GPL License. 
+
