@@ -1,9 +1,12 @@
+Cricket Score Indicator
+=======================
+Displays live scores from ESPNcricinfo website in your indicator panel
 
 Working
 ==================
 Uses the unofficial JSON from ESPN Website to get the summary and scorecard for currently active matches
 
-Installation 
+Instructions 
 ============
 
 Install
