@@ -57,7 +57,7 @@ Screenshots
 ===================
 .. image:: screenshots/panel_image.png
 .. image:: screenshots/mainmenu_image.png
-.. image:: screenshots/submenu_image.png
+.. image:: screenshots/submenu_info.png
 
 License
 ===================
