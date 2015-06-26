@@ -156,7 +156,7 @@ class cric_ind:
     	dialog.set_website("https://github.com/rubyAce71697/cricket-score-applet")
     	dialog.set_website_label("Github page")
     	dialog.set_comments("Displays live scores from ESPN website in your indicator panel")
-    	dialog.set_logo(GdkPixbuf.Pixbuf.new_from_file(ICON_PATH + "default_black" + ".png"))
+    	dialog.set_logo(GdkPixbuf.Pixbuf.new_from_file(ICON_PATH + "cricscore_indicator" + ".svg"))
 
     	dialog.run()
     	dialog.destroy()
@@ -251,8 +251,13 @@ class cric_ind:
         """
         update the scorecard, commentary text for each match
         """
+        threads = []
         for m in self.intl_menu[1:] + self.dom_menu[1:]:
-            threading.Thread(target = self.update_menu_data, args = (m,)).start()
+            threads.append(threading.Thread(target = self.update_menu_data, args = (m,)))
+            threads[-1].start()
+
+        for thread in threads:
+            thread.join()
 
     def update_menu_data(self, m):
         match_info = self.scrap.get_match_data(m['id'])
