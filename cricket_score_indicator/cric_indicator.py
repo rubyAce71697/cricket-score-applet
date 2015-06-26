@@ -150,7 +150,7 @@ class cric_ind:
     	# fixes the "mapped without transient parent" warning
     	dialog.set_transient_for(widget.get_parent().get_parent())
 
-    	dialog.set_program_name("ESPN Indicator")
+    	dialog.set_program_name("Cricket Score Indicator")
     	dialog.add_credit_section("Authors:", ['Nishant Kukreja (github.com/rubyace71697)', 'Abhishek Rose (github.com/rawcoder)'])
     	dialog.set_license_type(Gtk.License.GPL_3_0)
     	dialog.set_website("https://github.com/rubyAce71697/cricket-score-applet")
