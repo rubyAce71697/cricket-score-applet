@@ -6,7 +6,7 @@ Working
 ==================
 Uses the unofficial JSON from ESPN Website to get the summary and scorecard for currently active matches
 
-Instructions 
+Instructions
 ============
 
 Install
@@ -31,7 +31,7 @@ Usage
 ===================
 
 From terminal run::
- 
+
  cricscore_indicator
 
 To run indicator in background ::
@@ -47,9 +47,7 @@ Features
 * Categories for International and Domestic matches
 * Option to set a particular match score as indicator label
 * Adds new match as it is available and deletes the unavailable ones
-* Icon shows the runs scored on the last delivery of the corresponding match 
-
-
+* Icon shows the runs scored on the last delivery of the corresponding match
 
 :Homepage: `Github Page <https://github.com/rubyAce71697/cricket-score-applet>`_.
 
