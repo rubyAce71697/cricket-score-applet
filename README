@@ -40,6 +40,9 @@ To run indicator in background ::
 
  nohup cricscore_indicator &
 
+Run from the Application Menu ::
+
+ search for cricscore_indicator
 
 Features
 ===================
