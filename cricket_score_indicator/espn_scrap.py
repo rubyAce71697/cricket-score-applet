@@ -117,7 +117,9 @@ class espn_scrap:
 
     def get_match_data(self, m_id):
         try:
+            #print (MATCH_URL(self.match[m_id]['url']))
             json_data = (requests.get(MATCH_URL(self.match[m_id]['url']), headers = self.requestParam, timeout = 10)).json()
+            #print (json_data)
         except Exception as err:
             print ('get_match_data: Exception: ', err)
             return {}
@@ -209,7 +211,7 @@ class espn_scrap:
                                                         players   = x['players'],
                                                         event     = x['event'],
                                                         # HTML character entity references are *evil*
-                                                        dismissal = ("\n\t" + x['dismissal'].replace("&amp;","&").replace("&nbsp;"," ").replace("&bull;","0").replace("&dagger;", "†"))
+                                                        dismissal = ("\n\t" + x['dismissal'].replace("&amp;","&").replace("&nbsp;"," ").replace("&bull;","0").replace("&dagger;", "(wk)").replace("*", "(c)"))
                                                                     if x['dismissal'] != "" else "",
                                                         ) for x in json_data['comms'][0]['ball'] if 'event' in x])
 

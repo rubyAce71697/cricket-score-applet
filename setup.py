@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
 from distutils.core import setup
 import sys
@@ -8,7 +8,7 @@ if 'bdist_wheel' in sys.argv:
 
 setup(
 	name             = "cricket_score_indicator",
-	version          = "3.3",
+	version          = "3.3.2",
 	author           = "Nishant Kukreja and Abhishek Rose",
 	author_email     = "kukreja34@gmail.com",
 	description      = "An indicator to show live cricket(domestic/international) scores",

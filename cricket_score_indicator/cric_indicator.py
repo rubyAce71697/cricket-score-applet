@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
 from gi.repository import Gtk, GObject, GdkPixbuf
 from gi.repository import AppIndicator3 as appindicator
@@ -119,6 +119,7 @@ class cric_ind:
 
         # OK, this one is not direct
         # we're using the submenu's title for storing indicator's labelling data i.e. score + last ball result + id of the match
+
         # this is needed because when the user clicks on 'set as label', the callback only gets the corresponding widget's ptr
         # by storing data this we can avoid expensive search operation in the callback
         # see the 'show_clicked' func for more
