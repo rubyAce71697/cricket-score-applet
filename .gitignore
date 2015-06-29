@@ -3,3 +3,5 @@ tags
 *.pyc
 *~
 *.vim
+MANIFEST
+dist
