@@ -8,26 +8,26 @@ Working
 ==================
 Uses the unofficial JSON from ESPN Website to get the summary and scorecard for currently active matches
 
-Instructions
-============
+Requirements
+==================
+Ubuntu 14.04 and above should work out of box.
+PPA installation method is recommended.
 
-Install
---------
+Instructions
+==================
+
+Install (PyPI)
+--------------
 ::
 
  sudo pip install -i https://pypi.python.org/pypi cricket_score_indicator
 
-Upgrade
--------
+Install (PPA)
+-------------
 ::
 
- sudo pip install --upgrade cricket_score_indicator
-
-Uninstall
----------
-::
-
- sudo pip uninstall cricket_score_indicator
+ sudo add-apt-repository ppa:rawcoder/cricket-score-indicator
+ sudo apt-get update && sudo apt-get install cricket-score-indicator
 
 Usage
 ===================
@@ -55,6 +55,7 @@ Features
 * Icon shows the runs scored on the last delivery of the corresponding match
 
 :Homepage: `Github Page <https://github.com/rubyAce71697/cricket-score-applet>`_.
+:Launchpad (PPA): `https://launchpad.net/~rawcoder/+archive/ubuntu/cricket-score-indicator`_.
 
 Screenshots
 ===================
@@ -64,6 +65,6 @@ Screenshots
 
 License
 ===================
-GPLv3
+Licenced under GPL v3. See the LICENSE file
 
 .. image:: https://www.gnu.org/graphics/gplv3-127x51.png

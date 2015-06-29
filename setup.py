@@ -8,14 +8,14 @@ if 'bdist_wheel' in sys.argv:
 
 setup(
 	name             = "cricket_score_indicator",
-	version          = "3.3.2.2",
+	version          = "3.3.2.3",
 	author           = "Nishant Kukreja",
 	author_email     = "kukreja34@gmail.com",
 	maintainer       = "Abhishek",
 	maintainer_email = "rawcoder@openmailbox.org",
 	description      = "An indicator to show live cricket(domestic/international) scores",
 	license          = "GPLv3",
-	keywords         = "Cricket Scores Live Indicator Applet AppIndicator",
+	keywords         = "Cricket Scores Live Indicator Applet AppIndicator Unity GTK",
 	url              = "https://github.com/rubyAce71697/cricket-score-applet",
 	packages         = ["cricket_score_indicator"],
 	package_data     = {"cricket_score_indicator": ["icons/*"]},
@@ -26,13 +26,13 @@ setup(
 	long_description = open("README").read(),
         classifiers      = [
             'Development Status :: 5 - Production/Stable',
+            'Programming Language :: Python',
             'Environment :: X11 Applications :: Gnome',
             'Environment :: X11 Applications :: GTK',
             'Environment :: Web Environment',
             'Intended Audience :: End Users/Desktop',
             'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
             'Operating System :: POSIX :: Linux',
-            'Programming Language :: Python',
             'Topic :: Desktop Environment :: Gnome',
             'Topic :: Internet'
           ]
