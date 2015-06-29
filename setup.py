@@ -8,11 +8,13 @@ if 'bdist_wheel' in sys.argv:
 
 setup(
 	name             = "cricket_score_indicator",
-	version          = "3.3.2",
-	author           = "Nishant Kukreja and Abhishek Rose",
+	version          = "3.3.2.2",
+	author           = "Nishant Kukreja",
 	author_email     = "kukreja34@gmail.com",
+	maintainer       = "Abhishek",
+	maintainer_email = "rawcoder@openmailbox.org",
 	description      = "An indicator to show live cricket(domestic/international) scores",
-	license          = "GPL",
+	license          = "GPLv3",
 	keywords         = "Cricket Scores Live Indicator Applet AppIndicator",
 	url              = "https://github.com/rubyAce71697/cricket-score-applet",
 	packages         = ["cricket_score_indicator"],
@@ -21,5 +23,17 @@ setup(
 	                    (sys.prefix + "/share/pixmaps", ["cricket_score_indicator/icons/cricscore_indicator.svg"]),
 	                    (sys.prefix + "/share/applications", ["cricscore_indicator.desktop"])],
 	scripts          = ["cricscore_indicator"],
-	long_description = open("README").read()
+	long_description = open("README").read(),
+        classifiers      = [
+            'Development Status :: 5 - Production/Stable',
+            'Environment :: X11 Applications :: Gnome',
+            'Environment :: X11 Applications :: GTK',
+            'Environment :: Web Environment',
+            'Intended Audience :: End Users/Desktop',
+            'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
+            'Operating System :: POSIX :: Linux',
+            'Programming Language :: Python',
+            'Topic :: Desktop Environment :: Gnome',
+            'Topic :: Internet'
+          ]
         )
