@@ -49,7 +49,9 @@ class cric_ind:
         """
 
         intl_header = Gtk.MenuItem.new_with_label("INTERNATIONAL")
+        
         intl_header.set_sensitive(False)
+       
         intl_header.show()
 
         self.intl_menu = [ {'gtk_menu':intl_header} ]
@@ -112,6 +114,10 @@ class cric_ind:
                 # our stuff
                 'id':              match_info['id'],
                 'url':             match_info['url'],
+                'gtk_enable':	   Gtk.MenuItem.new_with_label("Enable Scorecard"),
+                "enable":		   0,
+                "intl" :           match_info['international']
+                
                 }
 
         match_item['gtk_menu'].set_image(Gtk.Image.new_from_file(ICON_PATH + match_info['last_ball'] + ".png"))
@@ -125,19 +131,23 @@ class cric_ind:
         # see the 'show_clicked' func for more
         match_item['gtk_submenu'].set_title('\n'.join([match_info['score_summary'], match_info['last_ball'], match_info['id']]))
         match_item['gtk_show'].connect("activate",self.show_clicked)
-
+        match_item['gtk_enable'].connect("activate", self.local_enable,match_item)
         match_item['gtk_description'].set_sensitive(False)
         match_item['gtk_scorecard'].set_sensitive(False)
         match_item['gtk_commentary'].set_sensitive(False)
+        #match_item['gtk_enable'].set_sensitive(False)
 
         match_item['gtk_submenu'].append(match_item['gtk_show'])
         match_item['gtk_submenu'].append(match_item['gtk_description'])
         match_item['gtk_submenu'].append(match_item['gtk_scorecard'])
         match_item['gtk_submenu'].append(match_item['gtk_commentary'])
+        match_item['gtk_submenu'].append(match_item['gtk_enable'])
 
         match_item['gtk_menu'].set_submenu(match_item['gtk_submenu'])
 
-        match_item['gtk_menu'].show_all()
+        match_item['gtk_menu'].show()
+        match_item['gtk_show'].show()
+        match_item['gtk_enable'].show()
 
         return match_item
 
@@ -161,6 +171,30 @@ class cric_ind:
 
     	dialog.run()
     	dialog.destroy()
+
+    def local_enable(self,widget,match_item):
+        match_item['enable'] = not match_item['enable']
+        if(match_item['enable']):
+            self.show_submenu(match_item)
+        else:
+            self.hide_submenu(match_item)
+
+    def hide_submenu(self,match_item):
+        match_item['gtk_description'].hide()
+        match_item['gtk_scorecard'].hide()
+        match_item['gtk_commentary'].hide()
+        match_item['gtk_enable'].set_label("Eisable Scorecard")
+        
+        match_item['gtk_menu'].set_image(Gtk.Image.new_from_file(ICON_PATH +  "_.png"))
+        if match_item['id'] == self.ind_label_match_id:
+            self.set_indicator_icon('_')
+        
+    	
+    def show_submenu(self,match_item):
+        match_item['gtk_description'].show()
+        match_item['gtk_scorecard'].show()
+        match_item['gtk_commentary'].show()
+        match_item['gtk_enable'].set_label("Disable Scorecard")        
 
     def show_clicked(self, widget):
         """
@@ -254,8 +288,9 @@ class cric_ind:
         """
         threads = []
         for m in self.intl_menu[1:] + self.dom_menu[1:]:
-            threads.append(threading.Thread(target = self.update_menu_data, args = (m,)))
-            threads[-1].start()
+            if(m['enable']):
+                threads.append(threading.Thread(target = self.update_menu_data, args = (m,)))
+                threads[-1].start()
 
         for thread in threads:
             thread.join()

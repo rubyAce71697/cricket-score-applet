@@ -8,7 +8,7 @@ if 'bdist_wheel' in sys.argv:
 
 setup(
 	name             = "cricket_score_indicator",
-	version          = "3.3.2.4",
+	version          = "3.4",
 	author           = "Nishant Kukreja , Abhishek Rose",
 	author_email     = "kukreja34@gmail.com",
 	

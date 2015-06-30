@@ -4,9 +4,12 @@ Cricket Score Indicator
 =======================
 Displays live scores from ESPNcricinfo website in your indicator panel
 
+
 Working
 ==================
 Uses the unofficial JSON from ESPN Website to get the summary and scorecard for currently active matches
+
+
 
 Requirements
 ==================
@@ -45,6 +48,13 @@ Run from the Application Menu ::
 
  search for cricscore_indicator
 
+Note (Changes in 3.4)
+=======================
+Initially all submenus as diabled for reducing the network usage. Since there are also irrelevant matches in the list and updating their submenu can cause you your precious data. The icons will not update since Icon shows the runs scored on the last ball.
+
+To enable for a particualar match, in submenu option click the "Enable Scorecard" and for that particular match match icon will be updated.
+Any number of scorecards can be enabled.
+
 Features
 ===================
 * Shows current score as indicator
@@ -54,6 +64,7 @@ Features
 * Option to set a particular match score as indicator label
 * Adds new match as it is available and deletes the unavailable ones
 * Icon shows the runs scored on the last delivery of the corresponding match
+* Initially all the submenus (scorecards) are hidden to reduce the network usage 
 
 :Homepage: `Github Page <https://github.com/rubyAce71697/cricket-score-applet>`_.
 :Launchpad(PPA):     https://launchpad.net/~rawcoder/+archive/ubuntu/cricket-score-indicator
