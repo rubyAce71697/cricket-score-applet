@@ -49,17 +49,8 @@ class cric_ind:
         Setup the Gtk menu of the indicator
         """
 
-        intl_header = Gtk.MenuItem.new_with_label("INTERNATIONAL")
-        intl_header.set_sensitive(False)
-        intl_header.show()
-
-        self.intl_menu = [ {'gtk_menu':intl_header} ]
-
-        dom_header = Gtk.MenuItem.new_with_label("DOMESTIC")
-        dom_header.set_sensitive(False)
-        dom_header.show()
-
-        self.dom_menu = [ {'gtk_menu':dom_header} ]
+        self.intl_menu = [ ]
+        self.dom_menu = [ ]
 
         intl_matches, dom_matches = self.scrap.get_matches_summary()
         for match_info in intl_matches + dom_matches:
@@ -75,8 +66,20 @@ class cric_ind:
 
         menu = Gtk.Menu.new()
 
+        intl_header = Gtk.MenuItem.new_with_label("INTERNATIONAL")
+        intl_header.set_sensitive(False)
+        intl_header.show()
+
+        menu.append(intl_header)
+
         for m in self.intl_menu:
             menu.append(m['gtk_menu'])
+
+        dom_header = Gtk.MenuItem.new_with_label("DOMESTIC")
+        dom_header.set_sensitive(False)
+        dom_header.show()
+
+        menu.append(dom_header)
 
         for m in self.dom_menu:
             menu.append(m['gtk_menu'])
@@ -224,41 +227,41 @@ class cric_ind:
         intl_matches, dom_matches = self.scrap.get_matches_summary()
 
         # remove items
-        while len(self.intl_menu) > 1 and len(self.intl_menu)-1 > len(intl_matches):
+        while len(self.intl_menu) > 0 and len(self.intl_menu) > len(intl_matches):
             # GTK updates shouldn't be done in a separate thread, so we add our update to idle queue
             GObject.idle_add(self.remove_menu, (self.intl_menu.pop())['gtk_menu'])
 
-        while len(self.dom_menu) > 1 and len(self.dom_menu)-1 > len(dom_matches):
+        while len(self.dom_menu) > 0 and len(self.dom_menu) > len(dom_matches):
             GObject.idle_add(self.remove_menu, (self.dom_menu.pop())['gtk_menu'])
 
         # add items
-        while len(self.intl_menu)-1 < len(intl_matches):
+        while len(self.intl_menu) < len(intl_matches):
             match_item = self.create_match_item(intl_matches[0])
             GObject.idle_add(self.add_menu, match_item['gtk_menu'], 1)  # <-- append after "INTERNATIONAL" header
             self.intl_menu.append(match_item)
 
-        while len(self.dom_menu)-1 < len(dom_matches):
+        while len(self.dom_menu) < len(dom_matches):
             match_item = self.create_match_item(dom_matches[0])
-            GObject.idle_add(self.add_menu, match_item['gtk_menu'], len(self.intl_menu) + 1)    # <-- append after "DOMESTIC" header
+            GObject.idle_add(self.add_menu, match_item['gtk_menu'], len(self.intl_menu) + 2)    # <-- append after "DOMESTIC" header
             self.dom_menu.append(match_item)
 
-        intl, dom = 1, 1
+        intl_iter, dom_iter = iter(self.intl_menu), iter(self.dom_menu)
         m_id_set = False
         for match_info in intl_matches + dom_matches:
             if match_info['international']:
-                self.intl_menu[intl]['id'] = match_info['id']
-                self.intl_menu[intl]['url'] = match_info['url']
+                intl_item = intl_iter.next()
 
-                GObject.idle_add(self.set_menu_label, self.intl_menu[intl]['gtk_menu'], match_info['score_summary'])
+                intl_item['id'] = match_info['id']
+                intl_item['url'] = match_info['url']
 
-                intl += 1
+                GObject.idle_add(self.set_menu_label, intl_item['gtk_menu'], match_info['score_summary'])
             else:
-                self.dom_menu[dom]['id'] = match_info['id']
-                self.dom_menu[dom]['url'] = match_info['url']
+                dom_item = dom_iter.next()
 
-                GObject.idle_add(self.set_menu_label, self.dom_menu[dom]['gtk_menu'], match_info['score_summary'])
+                dom_item['id'] = match_info['id']
+                dom_item['url'] = match_info['url']
 
-                dom += 1
+                GObject.idle_add(self.set_menu_label, dom_item['gtk_menu'], match_info['score_summary'])
 
             if self.ind_label_match_id is None or match_info['id'] == self.ind_label_match_id:
                 GObject.idle_add(self.set_indicator_label, match_info['score_summary'])
@@ -266,12 +269,12 @@ class cric_ind:
 
         # we don't want the indicator label to point at old stuff
         if not m_id_set:
-            if len(self.intl_menu) > 1:
+            if len(self.intl_menu) > 0:
                 self.ind_label_match_id = self.intl_menu[1]['id']
-                GObject.idle_add(self.set_indicator_label, self.intl_menu[1]['gtk_menu'].get_label())
-            elif len(self.dom_menu) > 1:
+                GObject.idle_add(self.set_indicator_label, self.intl_menu[0]['gtk_menu'].get_label())
+            elif len(self.dom_menu) > 0:
                 self.ind_label_match_id = self.dom[1]['id']
-                GObject.idle_add(self.set_indicator_label, self.dom_menu[1]['gtk_menu'].get_label())
+                GObject.idle_add(self.set_indicator_label, self.dom_menu[0]['gtk_menu'].get_label())
             else:
                 self.ind_label_match_id = None
                 GObject.idle_add(self.set_indicator_label, "Nothings")
@@ -283,7 +286,7 @@ class cric_ind:
         update the scorecard, commentary text for each match
         """
         threads = []
-        for m in self.intl_menu[1:] + self.dom_menu[1:]:
+        for m in self.intl_menu + self.dom_menu:
             if m['enable']:
                 threads.append(threading.Thread(target = self.update_menu_data, args = (m,)))
                 threads[-1].start()
