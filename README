@@ -4,12 +4,9 @@ Cricket Score Indicator
 =======================
 Displays live scores from ESPNcricinfo website in your indicator panel
 
-
 Working
 ==================
 Uses the unofficial JSON from ESPN Website to get the summary and scorecard for currently active matches
-
-
 
 Requirements
 ==================
@@ -30,7 +27,7 @@ Install (PPA)
 ::
 
  sudo add-apt-repository ppa:rawcoder/cricket-score-indicator
- sudo apt-get update 
+ sudo apt-get update
  sudo apt-get install cricket-score-indicator
 
 Usage
@@ -50,21 +47,20 @@ Run from the Application Menu ::
 
 Note (Changes in 3.4)
 =======================
-Initially all submenus as diabled for reducing the network usage. Since there are also irrelevant matches in the list and updating their submenu can cause you your precious data. The icons will not update since Icon shows the runs scored on the last ball.
+Initially all scorecards (submenus) are disabled for reducing network usage as submenu update uses more data. The icons will not update as well since the update depends on scorecard data.
 
-To enable for a particualar match, in submenu option click the "Enable Scorecard" and for that particular match match icon will be updated.
-Any number of scorecards can be enabled.
+To enable scorecard for a particular match, click on "Enable Scorecard" inside the submenu of that match.
 
 Features
 ===================
-* Shows current score as indicator
+* Shows current score as indicator label
 * Updated as soon as espncricinfo is updated
 * Submenu shows the scorecard of corresponding match
 * Categories for International and Domestic matches
 * Option to set a particular match score as indicator label
 * Adds new match as it is available and deletes the unavailable ones
 * Icon shows the runs scored on the last delivery of the corresponding match
-* Initially all the submenus (scorecards) are hidden to reduce the network usage 
+* Initially all submenus (scorecards) are hidden to reduce network usage
 
 :Homepage: `Github Page <https://github.com/rubyAce71697/cricket-score-applet>`_.
 :Launchpad(PPA):     https://launchpad.net/~rawcoder/+archive/ubuntu/cricket-score-indicator
