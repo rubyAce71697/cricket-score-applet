@@ -11,7 +11,8 @@ import sys
 
 from cricket_score_indicator.espn_scrap import espn_scrap
 
-REFRESH_TIMEOUT = 3 # second(s)
+# the timeout between each fetch
+REFRESH_INTERVAL = 10 # second(s)
 ICON_PATH = path.join(path.abspath(path.dirname(__file__)), "icons/")
 
 class cric_ind:
@@ -144,8 +145,6 @@ class cric_ind:
     def quit(self, widget):
         Gtk.main_quit()
 
-
-
     def about(self, widget):
     	dialog = Gtk.AboutDialog.new()
     	# fixes the "mapped without transient parent" warning
@@ -182,10 +181,14 @@ class cric_ind:
 
     def update_data(self):
         while True:
-            #print("Updating stuff")
+            start = time.time() # get UNIX time
+            print("Updating stuff")
             self.update_labels()
             self.update_sublabels()
-            #print("...  done")
+            print("...  done")
+            duration = time.time() - start # resolution of 1 second is guaranteed
+            if duration < REFRESH_INTERVAL: # sleep if we still have some time left before website update
+                time.sleep(REFRESH_INTERVAL - duration)
             #no need to add sleep already it is slow
 
     def update_labels(self):
