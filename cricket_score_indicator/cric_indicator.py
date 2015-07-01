@@ -2,7 +2,7 @@
 
 from gi.repository import Gtk, GObject, GdkPixbuf
 from gi.repository import AppIndicator3 as appindicator
-
+from gi.repository import Dbusmenu
 from os import path
 import threading
 import time
@@ -53,13 +53,17 @@ class cric_ind:
         intl_header.set_sensitive(False)
         intl_header.show()
 
+        intl_sep = Gtk.SeparatorMenuItem.new()
+        intl_sep.show()
         self.intl_menu = [ {'gtk_menu':intl_header} ]
 
         dom_header = Gtk.MenuItem.new_with_label("DOMESTIC")
         dom_header.set_sensitive(False)
         dom_header.show()
 
-        self.dom_menu = [ {'gtk_menu':dom_header} ]
+        dom_sep = Gtk.SeparatorMenuItem.new()
+        dom_sep.show()
+        self.dom_menu = [ {'gtk_menu':dom_header}]
 
         intl_matches, dom_matches = self.scrap.get_matches_summary()
         for match_info in intl_matches + dom_matches:
@@ -75,16 +79,32 @@ class cric_ind:
 
         menu = Gtk.Menu.new()
 
-        for m in self.intl_menu:
-            menu.append(m['gtk_menu'])
-
-        for m in self.dom_menu:
-            menu.append(m['gtk_menu'])
-
-        # separate out matches from "About" and "Quit"
         sep_item = Gtk.SeparatorMenuItem.new()
         sep_item.show()
+        
+        menu.append(self.intl_menu[0]['gtk_menu'])
+        
         menu.append(sep_item)
+    
+        for m in self.intl_menu[1:]:
+            menu.append(m['gtk_menu'])
+
+    	menu.append(self.dom_menu[0]['gtk_menu'])
+        
+        dep_item = Gtk.SeparatorMenuItem.new()
+        dep_item.show()
+        menu.append(dep_item)
+        
+
+
+        for m in self.dom_menu[1:]:
+            menu.append(m['gtk_menu'])
+
+        aep_item = Gtk.SeparatorMenuItem.new()
+        aep_item.show()
+        menu.append(aep_item)
+        # separate out matches from "About" and "Quit"
+        
 
         # some self promotion
         about_item = Gtk.MenuItem("About")
@@ -100,6 +120,8 @@ class cric_ind:
 
         return menu
 
+    
+
     def create_match_item(self, match_info):
         match_item = {
                 # GTK stuff
@@ -107,15 +129,21 @@ class cric_ind:
                 # NOTE: Gtk.ImageMenuItem has been deprecated in GTK 3.10
                 'gtk_submenu':     Gtk.Menu.new(),
                 'gtk_show':        Gtk.MenuItem.new_with_label("Set as label"),
+                'gtk_seperator_1': Gtk.SeparatorMenuItem(),
                 'gtk_description': Gtk.MenuItem.new_with_label(match_info['description']),
+                'gtk_seperator_2': Gtk.SeparatorMenuItem(), 
                 'gtk_scorecard':   Gtk.MenuItem.new_with_label(match_info['scorecard_summary']),
+                'gtk_seperator_3': Gtk.SeparatorMenuItem(),
                 'gtk_commentary':  Gtk.MenuItem.new_with_label(match_info['comms']),
-                'gtk_enable':      Gtk.MenuItem.new_with_label("Enable Scorecard"),
+                'gtk_seperator_4': Gtk.SeparatorMenuItem(),
+                
+                'gtk_check':           Gtk.CheckMenuItem("Scorecard"),
                 # our stuff
+                'is_active':       False,
                 'id':              match_info['id'],
                 'url':             match_info['url'],
                 "last_ball":       match_info['last_ball'],
-                "enable":          False,
+                
                 }
 
         match_item['gtk_menu'].set_image(Gtk.Image.new_from_file(ICON_PATH + match_info['last_ball'] + ".png"))
@@ -125,19 +153,26 @@ class cric_ind:
         match_item['gtk_description'].set_sensitive(False)
         match_item['gtk_scorecard'].set_sensitive(False)
         match_item['gtk_commentary'].set_sensitive(False)
-        match_item['gtk_enable'].connect("activate", self.local_enable, match_item)
+        #match_item['gtk_enable'].connect("activate", self.local_enable, match_item)
+        match_item['gtk_check'].set_active(match_item['is_active'])
+        match_item['gtk_check'].connect("toggled",self.local_enable,match_item)
 
         match_item['gtk_submenu'].append(match_item['gtk_show'])
+        match_item['gtk_submenu'].append(match_item['gtk_seperator_1'])
         match_item['gtk_submenu'].append(match_item['gtk_description'])
+        match_item['gtk_submenu'].append(match_item['gtk_seperator_2'])
         match_item['gtk_submenu'].append(match_item['gtk_scorecard'])
+        match_item['gtk_submenu'].append(match_item['gtk_seperator_3'])
         match_item['gtk_submenu'].append(match_item['gtk_commentary'])
-        match_item['gtk_submenu'].append(match_item['gtk_enable'])
+        match_item['gtk_submenu'].append(match_item['gtk_seperator_4'])
+        match_item['gtk_submenu'].append(match_item['gtk_check'])
 
         match_item['gtk_menu'].set_submenu(match_item['gtk_submenu'])
 
         match_item['gtk_menu'].show()
+        match_item['gtk_seperator_1'].show()
         match_item['gtk_show'].show()
-        match_item['gtk_enable'].show()
+        match_item['gtk_check'].show()
 
         return match_item
 
@@ -162,17 +197,23 @@ class cric_ind:
 
     def local_enable(self, widget, match_item):
         # toggle the state
-        match_item['enable'] = not match_item['enable']
-        if match_item['enable']:
+        
+        if widget.get_active():
+            print widget.get_active()
             self.show_submenu(match_item)
         else:
+            print widget.get_active()
             self.hide_submenu(match_item)
+        #widget.set_active()
 
     def hide_submenu(self, match_item):
         match_item['gtk_description'].hide()
+        match_item['gtk_seperator_2'].hide()
         match_item['gtk_scorecard'].hide()
+        match_item['gtk_seperator_3'].hide()
         match_item['gtk_commentary'].hide()
-        match_item['gtk_enable'].set_label("Enable Scorecard")
+        match_item['gtk_seperator_4'].hide()
+        #match_item['gtk_enable'].set_label("Enable Scorecard")
 
         match_item['last_ball'] = "_"   # set to default
 
@@ -184,9 +225,12 @@ class cric_ind:
 
     def show_submenu(self,match_item):
         match_item['gtk_description'].show()
+        match_item['gtk_seperator_2'].show()
         match_item['gtk_scorecard'].show()
+        match_item['gtk_seperator_3'].show()
         match_item['gtk_commentary'].show()
-        match_item['gtk_enable'].set_label("Disable Scorecard")
+        match_item['gtk_seperator_4'].show()
+        #match_item['gtk_enable'].set_label("Disable Scorecard")
 
     def show_clicked(self, widget, match_item):
         """
@@ -234,12 +278,12 @@ class cric_ind:
         # add items
         while len(self.intl_menu)-1 < len(intl_matches):
             match_item = self.create_match_item(intl_matches[0])
-            GObject.idle_add(self.add_menu, match_item['gtk_menu'], 1)  # <-- append after "INTERNATIONAL" header
+            GObject.idle_add(self.add_menu, match_item['gtk_menu'], 2)  # <-- append after "INTERNATIONAL" header
             self.intl_menu.append(match_item)
 
         while len(self.dom_menu)-1 < len(dom_matches):
             match_item = self.create_match_item(dom_matches[0])
-            GObject.idle_add(self.add_menu, match_item['gtk_menu'], len(self.intl_menu) + 1)    # <-- append after "DOMESTIC" header
+            GObject.idle_add(self.add_menu, match_item['gtk_menu'], len(self.intl_menu) + 2)    # <-- append after "DOMESTIC" header
             self.dom_menu.append(match_item)
 
         intl, dom = 1, 1
@@ -284,7 +328,7 @@ class cric_ind:
         """
         threads = []
         for m in self.intl_menu[1:] + self.dom_menu[1:]:
-            if m['enable']:
+            if m['gtk_check'].get_active():
                 threads.append(threading.Thread(target = self.update_menu_data, args = (m,)))
                 threads[-1].start()
 
@@ -299,7 +343,7 @@ class cric_ind:
             return
 
         # we've been away for a while, some things may have changed
-        if m['enable']:
+        if m['gtk_check'].get_active():
             m['last_ball'] = match_info['last_ball']
 
             if 'won by' in match_info['scorecard_summary']:
