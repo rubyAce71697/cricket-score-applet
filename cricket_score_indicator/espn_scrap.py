@@ -167,7 +167,7 @@ class espn_scrap:
             # TODO: figure out a better method (tabular?) for displaying this data
             if json_data['centre']['batting']:
                 match_summary += "\n\nBatsman:   runs (balls)\n" +\
-                                 "\n".join([ "{player_name:<12} {runs:>4} ({balls:^5})".format(\
+                                 "\n".join([ " {player_name:<12} {runs:>4} ({balls:^5})".format(\
                                                     # NOTE: in some cases 'popular_name' may be empty, so using 'known_as' instead
                                                     player_name = (x['popular_name'] if x['popular_name'] else x['known_as'])\
                                                                     + ("*" if x['live_current_name'] == "striker" else ""),
@@ -177,7 +177,7 @@ class espn_scrap:
 
             if json_data['centre']['bowling']:
                 match_summary += "\n\nBowlers:   overs-maidens-runs-wickets  economy-rate\n" +\
-                                 "\n".join([ "{player_name:<12} {overs} - {maidens} - {runs} - {wickets}  {economy}".format( \
+                                 "\n".join([ " {player_name:<12} {overs} - {maidens} - {runs} - {wickets}  {economy}".format( \
                                                     player_name = (x['popular_name'] if x['popular_name'] else x['known_as'])\
                                                                     + ("*" if x['live_current_name'] == "current bowler" else ""),
                                                     overs       = x['overs'],

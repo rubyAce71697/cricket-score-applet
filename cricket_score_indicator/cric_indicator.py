@@ -50,9 +50,7 @@ class cric_ind:
         """
 
         intl_header = Gtk.MenuItem.new_with_label("INTERNATIONAL")
-        
         intl_header.set_sensitive(False)
-       
         intl_header.show()
 
         self.intl_menu = [ {'gtk_menu':intl_header} ]
@@ -112,31 +110,22 @@ class cric_ind:
                 'gtk_description': Gtk.MenuItem.new_with_label(match_info['description']),
                 'gtk_scorecard':   Gtk.MenuItem.new_with_label(match_info['scorecard_summary']),
                 'gtk_commentary':  Gtk.MenuItem.new_with_label(match_info['comms']),
+                'gtk_enable':      Gtk.MenuItem.new_with_label("Enable Scorecard"),
                 # our stuff
                 'id':              match_info['id'],
                 'url':             match_info['url'],
-                'gtk_enable':	   Gtk.MenuItem.new_with_label("Enable Scorecard"),
-                "enable":		   0,
-                "intl" :           match_info['international']
-                
+                "last_ball":       match_info['last_ball'],
+                "enable":          False,
                 }
 
         match_item['gtk_menu'].set_image(Gtk.Image.new_from_file(ICON_PATH + match_info['last_ball'] + ".png"))
         match_item['gtk_menu'].set_always_show_image(True)
 
-        # OK, this one is not direct
-        # we're using the submenu's title for storing indicator's labelling data i.e. score + last ball result + id of the match
-
-        # this is needed because when the user clicks on 'set as label', the callback only gets the corresponding widget's ptr
-        # by storing data this we can avoid expensive search operation in the callback
-        # see the 'show_clicked' func for more
-        match_item['gtk_submenu'].set_title('\n'.join([match_info['score_summary'], match_info['last_ball'], match_info['id']]))
-        match_item['gtk_show'].connect("activate",self.show_clicked)
-        match_item['gtk_enable'].connect("activate", self.local_enable,match_item)
+        match_item['gtk_show'].connect("activate",self.show_clicked, match_item)
         match_item['gtk_description'].set_sensitive(False)
         match_item['gtk_scorecard'].set_sensitive(False)
         match_item['gtk_commentary'].set_sensitive(False)
-        #match_item['gtk_enable'].set_sensitive(False)
+        match_item['gtk_enable'].connect("activate", self.local_enable, match_item)
 
         match_item['gtk_submenu'].append(match_item['gtk_show'])
         match_item['gtk_submenu'].append(match_item['gtk_description'])
@@ -171,44 +160,46 @@ class cric_ind:
     	dialog.run()
     	dialog.destroy()
 
-    def local_enable(self,widget,match_item):
+    def local_enable(self, widget, match_item):
+        # toggle the state
         match_item['enable'] = not match_item['enable']
-        if(match_item['enable']):
+        if match_item['enable']:
             self.show_submenu(match_item)
         else:
             self.hide_submenu(match_item)
 
-    def hide_submenu(self,match_item):
+    def hide_submenu(self, match_item):
         match_item['gtk_description'].hide()
         match_item['gtk_scorecard'].hide()
         match_item['gtk_commentary'].hide()
-        match_item['gtk_enable'].set_label("Eisable Scorecard")
-        
-        match_item['gtk_menu'].set_image(Gtk.Image.new_from_file(ICON_PATH +  "_.png"))
+        match_item['gtk_enable'].set_label("Enable Scorecard")
+
+        match_item['last_ball'] = "_"   # set to default
+
+        # force update in current cycle
+        self.update_menu_icon(match_item['gtk_menu'], "_")  # default icon
+
         if match_item['id'] == self.ind_label_match_id:
             self.set_indicator_icon('_')
-        
-    	
+
     def show_submenu(self,match_item):
         match_item['gtk_description'].show()
         match_item['gtk_scorecard'].show()
         match_item['gtk_commentary'].show()
-        match_item['gtk_enable'].set_label("Disable Scorecard")        
+        match_item['gtk_enable'].set_label("Disable Scorecard")
 
-    def show_clicked(self, widget):
+    def show_clicked(self, widget, match_item):
         """
         Callback for 'set as label' menuitem
         """
-        # retriveve the stored data from submenu, 'set as label' menuitem's parent
-        label, icon, m_id = widget.get_parent().get_title().split('\n')
-
         # the user has selected this 'm_id' as current label, so we remember it
-        self.ind_label_match_id = m_id
-        self.set_indicator_label(label)
-        self.set_indicator_icon(icon)
+        self.ind_label_match_id = match_item['id']
+
+        self.set_indicator_label(match_item['gtk_menu'].get_label())
+        self.set_indicator_icon(match_item['last_ball'])
 
     def set_indicator_label(self, label):
-        self.indicator.set_label(label, "")
+        self.indicator.set_label(label, "Cricket Score Indicator")
 
     def set_indicator_icon(self, icon):
         self.indicator.set_icon(ICON_PATH + icon + ".png")
@@ -216,14 +207,14 @@ class cric_ind:
     def update_data(self):
         while True:
             start = time.time() # get UNIX time
-            print("Updating stuff")
+            sys.stderr.write("\nUpdating stuff")
             self.update_labels()
             self.update_sublabels()
-            print("...  done")
+            sys.stderr.write("...  done")
+
             duration = time.time() - start # resolution of 1 second is guaranteed
             if duration < REFRESH_INTERVAL: # sleep if we still have some time left before website update
-                time.sleep(REFRESH_INTERVAL - duration)
-            #no need to add sleep already it is slow
+                time.sleep(REFRESH_INTERVAL-duration)
 
     def update_labels(self):
         """
@@ -243,12 +234,12 @@ class cric_ind:
         # add items
         while len(self.intl_menu)-1 < len(intl_matches):
             match_item = self.create_match_item(intl_matches[0])
-            GObject.idle_add(self.add_menu, match_item['gtk_menu'], 1)
+            GObject.idle_add(self.add_menu, match_item['gtk_menu'], 1)  # <-- append after "INTERNATIONAL" header
             self.intl_menu.append(match_item)
 
         while len(self.dom_menu)-1 < len(dom_matches):
             match_item = self.create_match_item(dom_matches[0])
-            GObject.idle_add(self.add_menu, match_item['gtk_menu'], len(self.intl_menu) + 1)
+            GObject.idle_add(self.add_menu, match_item['gtk_menu'], len(self.intl_menu) + 1)    # <-- append after "DOMESTIC" header
             self.dom_menu.append(match_item)
 
         intl, dom = 1, 1
@@ -284,6 +275,8 @@ class cric_ind:
             else:
                 self.ind_label_match_id = None
                 GObject.idle_add(self.set_indicator_label, "Nothings")
+            # set the default icon
+            GObject.idle_add(self.set_indicator_icon, "_")
 
     def update_sublabels(self):
         """
@@ -291,7 +284,7 @@ class cric_ind:
         """
         threads = []
         for m in self.intl_menu[1:] + self.dom_menu[1:]:
-            if(m['enable']):
+            if m['enable']:
                 threads.append(threading.Thread(target = self.update_menu_data, args = (m,)))
                 threads[-1].start()
 
@@ -305,19 +298,20 @@ class cric_ind:
         if match_info == {}:
             return
 
-        # used when 'set_as_label' button is clicked
-        m['gtk_submenu'].set_title('\n'.join([match_info['score_summary'], match_info['last_ball'], match_info['id']]))
+        # we've been away for a while, some things may have changed
+        if m['enable']:
+            m['last_ball'] = match_info['last_ball']
 
-        if('won by' in match_info['scorecard_summary']):
-            match_info['last_ball'] = "won"
+            if 'won by' in match_info['scorecard_summary']:
+                match_info['last_ball'] = "won"
 
-        GObject.idle_add(self.update_menu_icon, m['gtk_menu'], match_info['last_ball'])
-        GObject.idle_add(self.set_submenu_items, m, match_info['scorecard_summary'], match_info['description'], match_info['comms'])
-        if match_info['id'] == self.ind_label_match_id:
-            GObject.idle_add(self.set_indicator_icon, match_info['last_ball'])
+            GObject.idle_add(self.update_menu_icon, m['gtk_menu'], match_info['last_ball'])
+            GObject.idle_add(self.set_submenu_items, m, match_info['scorecard_summary'], match_info['description'], match_info['comms'])
+
+            if match_info['id'] == self.ind_label_match_id:
+                GObject.idle_add(self.set_indicator_icon, match_info['last_ball'])
 
     def add_menu(self, widget, pos):
-        widget.show()
         self.menu.insert(widget, pos)
 
     def remove_menu(self, widget):
