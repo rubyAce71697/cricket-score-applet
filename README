@@ -52,7 +52,7 @@ Run from the Application Menu ::
  search for Cricket Score Indicator
 
 Note (Changes in 3.4 & 3.5)
-=======================
+===========================
 Initially all scorecards (submenus) are disabled for reducing network usage as submenu update uses more data. The icons will not update as well since the update depends on scorecard data.
 
 To enable scorecard for a particular match, use the "Scorecard" check button inside the submenu of that match.
