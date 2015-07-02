@@ -10,8 +10,14 @@ Uses the unofficial JSON from ESPN Website to get the summary and scorecard for 
 
 Requirements
 ==================
-Ubuntu 14.04 and above should work out of box.
-PPA installation method is recommended.
+Ubuntu (Unity) 14.04 and above should work out of box.
+
+GNOME and KDE are not "officially" supported.
+
+However, the indicator should work out of box in KDE as well.
+GNOME users should install `AppIndicator Support shell extension <https://extensions.gnome.org/extension/615/appindicator-support/>`_ for best results.
+
+Debian users should use the PPA which automatically pulls dependencies.
 
 Instructions
 ==================
@@ -49,7 +55,7 @@ Note (Changes in 3.4)
 =======================
 Initially all scorecards (submenus) are disabled for reducing network usage as submenu update uses more data. The icons will not update as well since the update depends on scorecard data.
 
-To enable scorecard for a particular match, click on "Enable Scorecard" inside the submenu of that match.
+To enable scorecard for a particular match, use the "Scorecard" check button inside the submenu of that match.
 
 Features
 ===================

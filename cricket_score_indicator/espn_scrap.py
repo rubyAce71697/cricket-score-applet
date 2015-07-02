@@ -141,7 +141,7 @@ class espn_scrap:
         # HACK: assumes a single space is followed by ','; replace with above line in case of failure
         self.match[m_id]['description'] = json_data['description'].replace(', ', '\n')
 
-        match_summary = "\n" + json_data['live']['status'] + "\n" +\
+        match_summary = json_data['live']['status'] + "\n" +\
                               (json_data['live']['break'] + "\n" if json_data['live']['break'] != "" else "")
 
         # NOTE: there's also json_data['innings'] which is an array of all the innings; 'live':'innings' only tracks the current one
@@ -206,7 +206,7 @@ class espn_scrap:
 
         self.match[m_id]['comms'] = ""
         if json_data['comms']:
-            self.match[m_id]['comms'] = '\n' + '\n'.join(["{overs} {players} : {event}{dismissal}".format(
+            self.match[m_id]['comms'] = '\n'.join(["{overs} {players} : {event}{dismissal}".format(
                                                         overs     = x['overs_actual'],
                                                         players   = x['players'],
                                                         event     = x['event'],
