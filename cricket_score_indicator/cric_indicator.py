@@ -2,7 +2,6 @@
 
 from gi.repository import Gtk, GObject, GdkPixbuf
 from gi.repository import AppIndicator3 as appindicator
-#from gi.repository import Dbusmenu
 
 from os import path
 import threading
@@ -258,27 +257,25 @@ class cric_ind:
         # add items
         while len(self.intl_menu) < len(intl_matches):
             match_item = self.create_match_item(intl_matches[0])
-            GObject.idle_add(self.add_menu, match_item['gtk_menu'], 1)  # <-- append after "INTERNATIONAL" header
+            GObject.idle_add(self.add_menu, match_item['gtk_menu'], 2)  # <-- append after "INTERNATIONAL" header + separator
             self.intl_menu.append(match_item)
 
         while len(self.dom_menu) < len(dom_matches):
             match_item = self.create_match_item(dom_matches[0])
-            GObject.idle_add(self.add_menu, match_item['gtk_menu'], len(self.intl_menu) + 2)    # <-- append after "DOMESTIC" header
+            GObject.idle_add(self.add_menu, match_item['gtk_menu'], len(self.intl_menu) + 4)    # <-- append after "DOMESTIC" header + separator
             self.dom_menu.append(match_item)
 
         intl_iter, dom_iter = iter(self.intl_menu), iter(self.dom_menu)
         m_id_set = False
         for match_info in intl_matches + dom_matches:
             if match_info['international']:
-                intl_item = intl_iter.next()
-
+                intl_item = next(intl_iter)
                 intl_item['id'] = match_info['id']
                 intl_item['url'] = match_info['url']
 
                 GObject.idle_add(self.set_menu_label, intl_item['gtk_menu'], match_info['score_summary'])
             else:
-                dom_item = dom_iter.next()
-
+                dom_item = next(dom_iter)
                 dom_item['id'] = match_info['id']
                 dom_item['url'] = match_info['url']
 
