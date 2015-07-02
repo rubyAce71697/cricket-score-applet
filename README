@@ -1,7 +1,7 @@
 
-=======================
-Cricket Score Indicator
-=======================
+=======================================================
+Cricket Score Indicator |pypi-version| |pypi-downloads|
+=======================================================
 Displays live scores from ESPNcricinfo website in your indicator panel
 
 Working
@@ -10,8 +10,14 @@ Uses the unofficial JSON from ESPN Website to get the summary and scorecard for 
 
 Requirements
 ==================
-Ubuntu 14.04 and above should work out of box.
-PPA installation method is recommended.
+Ubuntu (Unity) 14.04 and above should work out of box.
+
+GNOME and KDE are not "officially" supported.
+
+However, the indicator should work out of box in KDE as well.
+GNOME users should install `AppIndicator Support shell extension <https://extensions.gnome.org/extension/615/appindicator-support/>`_ for best results.
+
+Ubuntu/Debian users should use the PPA which automatically pulls dependencies.
 
 Instructions
 ==================
@@ -43,13 +49,13 @@ To run indicator in background ::
 
 Run from the Application Menu ::
 
- search for cricscore_indicator
+ search for Cricket Score Indicator
 
 Note (Changes in 3.4)
 =======================
 Initially all scorecards (submenus) are disabled for reducing network usage as submenu update uses more data. The icons will not update as well since the update depends on scorecard data.
 
-To enable scorecard for a particular match, click on "Enable Scorecard" inside the submenu of that match.
+To enable scorecard for a particular match, use the "Scorecard" check button inside the submenu of that match.
 
 Features
 ===================
@@ -68,11 +74,18 @@ Features
 Screenshots
 ===================
 .. image:: screenshots/panel_image.png
-.. image:: screenshots/mainmenu_image.png
-.. image:: screenshots/submenu_info.png
+.. image:: screenshots/submenu_closed.png
+.. image:: screenshots/submenu_open.png
 
 License
 ===================
 Licenced under GPL v3. See the LICENSE file
 
 .. image:: https://www.gnu.org/graphics/gplv3-127x51.png
+
+.. |pypi-version| image:: https://img.shields.io/pypi/v/cricket_score_indicator.svg
+	:target: https://pypi.python.org/pypi/cricket_score_indicator
+   	:alt: PyPI: the Python Package Index
+.. |pypi-downloads| image:: https://img.shields.io/pypi/dm/cricket_score_indicator.svg
+	:target: https://pypi.python.org/pypi/cricket_score_indicator
+	:alt: PyPI: the Python Package Index
