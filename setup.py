@@ -24,6 +24,7 @@ setup(
 	                    (sys.prefix + "/share/applications", ["cricscore_indicator.desktop"])],
 	scripts          = ["cricscore_indicator"],
 	long_description = open("README").read(),
+        requires = ["requests", "gi.repository"],
         classifiers      = [
             'Development Status :: 5 - Production/Stable',
             'Programming Language :: Python',
