@@ -8,11 +8,11 @@ if 'bdist_wheel' in sys.argv:
 
 setup(
 	name             = "cricket_score_indicator",
-	version          = "3.4.2",
-	author           = "Nishant Kukreja",
+	version          = "3.5.2",
+	author           = "Nishant Kukreja, Abhishek Rose",
 	author_email     = "kukreja34@gmail.com",
-        maintainer       = "Abhishek",
-        maintainer_email = "rawcoder@openmailbox.org",
+    #maintainer       = "Abhishek",
+    #maintainer_email = "rawcoder@openmailbox.org",
 	description      = "An indicator to show live cricket(domestic/international) scores",
 	license          = "GPLv3",
 	keywords         = "Cricket Scores Live Indicator Applet AppIndicator Unity GTK",
