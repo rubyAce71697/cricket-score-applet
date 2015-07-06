@@ -35,6 +35,8 @@ class cric_ind:
         self.menu = self.menu_setup()
         self.indicator.set_menu(self.menu)
 
+        self.open_scorecard = set()
+
         thread = threading.Thread(target=self.main_update_data)
         thread.daemon = True
         thread.start()
@@ -177,7 +179,7 @@ class cric_ind:
     	dialog.set_transient_for(widget.get_parent().get_parent())
 
     	dialog.set_program_name("Cricket Score Indicator")
-    	dialog.add_credit_section("Authors:", ['Nishant Kukreja (github.com/rubyace71697)', 'Abhishek Rose (github.com/rawcoder)'])
+    	dialog.add_credit_section("Authors:", ['Nishant Kukreja (github.com/rubyace71697)', 'Abhishek (github.com/rawcoder)'])
     	dialog.set_license_type(Gtk.License.GPL_3_0)
     	dialog.set_website("https://github.com/rubyAce71697/cricket-score-applet")
     	dialog.set_website_label("Github page")
@@ -189,11 +191,16 @@ class cric_ind:
 
     def local_enable(self, widget, match_item):
         if widget.get_active():
+            # remember the 'id' of the match; needed when upstream list is updated
+            self.open_scorecard.add(match_item['id'])
             self.show_submenu(match_item)
         else:
+            if match_item['id'] in self.open_scorecard:
+                self.open_scorecard.remove(match_item['id'])
             self.hide_submenu(match_item)
 
     def hide_submenu(self, match_item):
+        match_item['gtk_check'].set_active(False)
         match_item['gtk_description'].hide()
         match_item['gtk_seperator_2'].hide()
         match_item['gtk_scorecard'].hide()
@@ -210,6 +217,7 @@ class cric_ind:
             self.set_indicator_icon('_')
 
     def show_submenu(self,match_item):
+        match_item['gtk_check'].set_active(True)
         match_item['gtk_description'].show()
         match_item['gtk_seperator_2'].show()
         match_item['gtk_scorecard'].show()
@@ -267,13 +275,17 @@ class cric_ind:
 
         intl_iter, dom_iter = iter(self.intl_menu), iter(self.dom_menu)
         m_id_set = False
+        all_m_id = set()
         for match_info in intl_matches + dom_matches:
+            curr_item = None
             if match_info['international']:
                 intl_item = next(intl_iter)
                 intl_item['id'] = match_info['id']
                 intl_item['url'] = match_info['url']
 
                 GObject.idle_add(self.set_menu_label, intl_item['gtk_menu'], match_info['score_summary'])
+
+                curr_item = intl_item
             else:
                 dom_item = next(dom_iter)
                 dom_item['id'] = match_info['id']
@@ -281,18 +293,32 @@ class cric_ind:
 
                 GObject.idle_add(self.set_menu_label, dom_item['gtk_menu'], match_info['score_summary'])
 
+                curr_item = dom_item
+
+            if match_info['id'] in self.open_scorecard:
+                GObject.idle_add(self.show_submenu, curr_item)
+            else:
+                GObject.idle_add(self.hide_submenu, curr_item)
+
             if self.ind_label_match_id is None or match_info['id'] == self.ind_label_match_id:
                 GObject.idle_add(self.set_indicator_label, match_info['score_summary'])
                 m_id_set = True
 
+            all_m_id.add(match_info['id'])
+
+        # don't keep stale m_id's
+        self.open_scorecard.intersection_update(all_m_id)
+
         # we don't want the indicator label to point at old stuff
         if not m_id_set:
+            # try setting with intl first
             if len(self.intl_menu) > 0:
-                self.ind_label_match_id = self.intl_menu[1]['id']
+                self.ind_label_match_id = self.intl_menu[0]['id']
                 GObject.idle_add(self.set_indicator_label, self.intl_menu[0]['gtk_menu'].get_label())
             elif len(self.dom_menu) > 0:
-                self.ind_label_match_id = self.dom[1]['id']
+                self.ind_label_match_id = self.dom[0]['id']
                 GObject.idle_add(self.set_indicator_label, self.dom_menu[0]['gtk_menu'].get_label())
+            # set to default
             else:
                 self.ind_label_match_id = None
                 GObject.idle_add(self.set_indicator_label, "Nothings")

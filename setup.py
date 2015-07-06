@@ -8,11 +8,11 @@ if 'bdist_wheel' in sys.argv:
 
 setup(
 	name             = "cricket_score_indicator",
-	version          = "3.5.2",
-	author           = "Nishant Kukreja, Abhishek Rose",
+	version          = "3.5.3",
+	author           = "Nishant Kukreja, Abhishek",
 	author_email     = "kukreja34@gmail.com",
-    #maintainer       = "Abhishek",
-    #maintainer_email = "rawcoder@openmailbox.org",
+        #maintainer      = "Abhishek",
+        #maintainer_email= "rawcoder@openmailbox.org",
 	description      = "An indicator to show live cricket(domestic/international) scores",
 	license          = "GPLv3",
 	keywords         = "Cricket Scores Live Indicator Applet AppIndicator Unity GTK",
@@ -24,7 +24,7 @@ setup(
 	                    (sys.prefix + "/share/applications", ["cricscore_indicator.desktop"])],
 	scripts          = ["cricscore_indicator"],
 	long_description = open("README").read(),
-        requires = ["requests", "gi.repository"],
+        requires         = ["requests", "gi.repository"],
         classifiers      = [
             'Development Status :: 5 - Production/Stable',
             'Programming Language :: Python',
