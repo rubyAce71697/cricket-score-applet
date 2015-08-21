@@ -12,9 +12,9 @@ Requirements
 ==================
 Ubuntu (Unity) 14.04 and above should work out of box.
 
-GNOME is not "officially" supported. (Doesn't work in KDE).
+GNOME users should install `AppIndicator Support shell extension <https://extensions.gnome.org/extension/615/appindicator-support/>`_ first.
 
-GNOME users should install `AppIndicator Support shell extension <https://extensions.gnome.org/extension/615/appindicator-support/>`_ for best results.
+KDE is not supported.
 
 Ubuntu/Debian users should use the PPA which automatically pulls dependencies.
 
@@ -72,9 +72,17 @@ Features
 
 Screenshots
 ===================
+Ubuntu (Unity)
+
 .. image:: screenshots/panel_image.png
 .. image:: screenshots/submenu_closed.png
 .. image:: screenshots/submenu_open.png
+
+Ubuntu GNOME
+
+.. image:: screenshots/gnome_scrot_1.png
+.. image:: screenshots/gnome_scrot_2.png
+.. image:: screenshots/gnome_scrot_3.png
 
 License
 ===================
