@@ -12,9 +12,8 @@ Requirements
 ==================
 Ubuntu (Unity) 14.04 and above should work out of box.
 
-GNOME and KDE are not "officially" supported.
+GNOME is not "officially" supported. (Doesn't work in KDE).
 
-However, the indicator should work out of box in KDE as well.
 GNOME users should install `AppIndicator Support shell extension <https://extensions.gnome.org/extension/615/appindicator-support/>`_ for best results.
 
 Ubuntu/Debian users should use the PPA which automatically pulls dependencies.
