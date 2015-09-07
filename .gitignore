@@ -5,3 +5,4 @@ tags
 *.vim
 MANIFEST
 dist
+test
