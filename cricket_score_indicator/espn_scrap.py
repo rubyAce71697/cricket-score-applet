@@ -141,11 +141,17 @@ class espn_scrap:
         # HACK: assumes a single space is followed by ','; replace with above line in case of failure
         self.match[m_id]['description'] = json_data['description'].replace(', ', '\n')
 
+        ########################################
+
+        # scoreboard section
+
+        # match status line
         match_summary = json_data['live']['status'] + "\n" +\
                               (json_data['live']['break'] + "\n" if json_data['live']['break'] != "" else "")
 
+        # 'score and RR' line
+        if json_data['live']['innings']:
         # NOTE: there's also json_data['innings'] which is an array of all the innings; 'live':'innings' only tracks the current one
-        if json_data['live']['innings']:        # in case match hasn't started yet
             match_summary += "\n{team_name}: {score}/{wickets}   Curr RR: {run_rate}{required_run_rate}".format(\
                                 team_name         = [t['team_name'] for t in json_data['team'] if t['team_id'] == json_data['live']['innings']['team_id']][0],
                                 score             = json_data['live']['innings']['runs'],
@@ -162,6 +168,29 @@ class espn_scrap:
             else:
                 match_summary += "\nOvers: " + json_data['live']['innings']['overs']
 
+        # 'Last Wicket' line
+        if json_data['live']['fow']:
+            for item in json_data['live']['fow']:
+                if item['live_current_name'] == 'last wicket':
+                    player_name = "<null>"
+
+                    for team in json_data['team']:
+                        if team['team_id'] == item['team_id']:
+                            for player in team['player']:
+                                if player['player_id'] == item['player_id']:
+                                    player_name = player['known_as']        # NOTE: there are multiple "names", check which one is suitable
+                                    break
+                            break
+
+                    match_summary += "\n\nLast Wicket: {player_name} {runs}({balls}) {dismissal_string}".format(\
+                                        player_name      = player_name,
+                                        runs             = item['out_player']['runs'],
+                                        balls            = item['out_player']['balls_faced'],
+                                        dismissal_string = item['out_player']['dismissal_string']
+                                    )
+                    break
+
+        # 'Batsman' and 'Bowlers' lines
         if json_data['centre']:     # not available in case of domestic and some international matches, so we cannot rely just on "international" flag
             # NOTE: the formatting work here assumes *monotype* fonts, hence doesn't work for proportionated fonts :(
             # TODO: figure out a better method (tabular?) for displaying this data
@@ -194,15 +223,22 @@ class espn_scrap:
                 # we need the data inside parenthesis
 
                 t = json_data['match']['current_summary'].split('(')
-                t = t[1].split(')')
-                t = t[0].split(',')
+                if len(t) == 2:
+                    # we got a clean split
+                    t = t[1].split(')')
+                    t = t[0].split(',')
 
-                match_summary += "\n\nBatsman:   runs\n" +\
-                                 "\n".join([ "{player_score_ball}".format(player_score_ball = x)\
-                                            for x in t[1:-1]]) +\
-                                 "\n\nBowlers:   wickets/runs\n{player_score_ball}".format(player_score_ball = t[-1])
+                    match_summary += "\n\nBatsman:   runs\n" +\
+                                     "\n".join([ "{player_score_ball}".format(player_score_ball = x)\
+                                                for x in t[1:-1]]) +\
+                                     "\n\nBowlers:   wickets/runs\n{player_score_ball}".format(player_score_ball = t[-1])
 
+        # cat all to form the scoreboard
         self.match[m_id]['scorecard_summary'] = match_summary
+
+        ########################################
+
+        # commentary section
 
         self.match[m_id]['comms'] = ""
         if json_data['comms']:
