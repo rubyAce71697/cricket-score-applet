@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import print_function
+import sys
 import requests
 
 BASE_URL = "http://espncricinfo.com"
@@ -50,7 +52,7 @@ class espn_scrap:
         try:
             summary = (requests.get(SUMMARY_URL, timeout = 5)).json()
         except Exception as err:
-            print ('get_matches_summary: Exception: ', err)
+            print ('get_matches_summary: Exception: ', err, file=sys.stderr)
             if self.match == {}:
                 return [self.dummy_match_info_intl], [self.dummy_match_info_dom]
             else:
@@ -121,7 +123,7 @@ class espn_scrap:
             json_data = (requests.get(MATCH_URL(self.match[m_id]['url']), headers = self.requestParam, timeout = 10)).json()
             #print (json_data)
         except Exception as err:
-            print ('get_match_data: Exception: ', err)
+            print ('get_match_data: Exception: ', err, file=sys.stderr)
             return {}
 
         self.match[m_id]['last_ball'] = "_"
@@ -171,7 +173,7 @@ class espn_scrap:
         # 'Last Wicket' line
         if json_data['live']['fow']:
             for item in json_data['live']['fow']:
-                if item['live_current_name'] == 'last wicket':
+                if item['live_current_name'] == 'last wicket' and item['player_id'] is not None:    # player info is not available in some domestic matches, hence we check before use
                     player_name = "<null>"
 
                     for team in json_data['team']:
@@ -186,7 +188,7 @@ class espn_scrap:
                                         player_name      = player_name,
                                         runs             = item['out_player']['runs'],
                                         balls            = item['out_player']['balls_faced'],
-                                        dismissal_string = item['out_player']['dismissal_string']
+                                        dismissal_string = item['out_player']['dismissal_string'].replace("&amp;","&").replace("&nbsp;"," ").replace("&bull;","0").replace("&dagger;", "(wk)").replace("*", "(c)")
                                     )
                     break
 
@@ -217,7 +219,7 @@ class espn_scrap:
                                             ) for x in json_data['centre']['bowling']])
 
         else:
-            if json_data['match']['current_summary']:
+            if 'current_summary' in json_data['match'] and json_data['match']['current_summary']:
                 # ['match']['current_summary'] is like this:
                 #       "Pakistan 58/2 (19.6 ov, Mohammad Hafeez 25*, Younis Khan 1*, KTGD Prasad 2/23)"
                 # we need the data inside parenthesis

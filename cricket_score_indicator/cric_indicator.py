@@ -124,7 +124,7 @@ class cric_ind:
                 'gtk_menu':        Gtk.ImageMenuItem.new_with_label(match_info['score_summary']),
                 # NOTE: Gtk.ImageMenuItem has been deprecated in GTK 3.10
                 'gtk_submenu':     Gtk.Menu.new(),
-                'gtk_show':        Gtk.MenuItem.new_with_label("Set as label"),
+                'gtk_set_as_label':Gtk.MenuItem.new_with_label("Set as label"),
                 'gtk_description': Gtk.MenuItem.new_with_label(match_info['description']),
                 'gtk_scorecard':   Gtk.MenuItem.new_with_label(match_info['scorecard_summary']),
                 'gtk_commentary':  Gtk.MenuItem.new_with_label(match_info['comms']),
@@ -144,14 +144,14 @@ class cric_ind:
         match_item['gtk_menu'].set_image(Gtk.Image.new_from_file(ICON_PATH + match_info['last_ball'] + ".png"))
         match_item['gtk_menu'].set_always_show_image(True)
 
-        match_item['gtk_show'].connect("activate", self.show_clicked, match_item)
+        match_item['gtk_set_as_label'].connect("activate", self.show_clicked, match_item)
         match_item['gtk_description'].set_sensitive(False)
         match_item['gtk_scorecard'].set_sensitive(False)
         match_item['gtk_commentary'].set_sensitive(False)
         match_item['gtk_check'].set_active(False)
-        match_item['gtk_check'].connect("toggled", self.local_enable, match_item)
+        match_item['gtk_check'].connect("toggled", self.show_scorecard_cb, match_item)
 
-        match_item['gtk_submenu'].append(match_item['gtk_show'])
+        match_item['gtk_submenu'].append(match_item['gtk_set_as_label'])
         match_item['gtk_submenu'].append(match_item['gtk_seperator_1'])
         match_item['gtk_submenu'].append(match_item['gtk_description'])
         match_item['gtk_submenu'].append(match_item['gtk_seperator_2'])
@@ -163,8 +163,9 @@ class cric_ind:
 
         match_item['gtk_menu'].set_submenu(match_item['gtk_submenu'])
 
+        # everything is "hidden" by default, so we call "show"
         match_item['gtk_menu'].show()
-        match_item['gtk_show'].show()
+        match_item['gtk_set_as_label'].show()
         match_item['gtk_seperator_1'].show()
         match_item['gtk_check'].show()
 
@@ -189,12 +190,12 @@ class cric_ind:
     	dialog.run()
     	dialog.destroy()
 
-    def local_enable(self, widget, match_item):
-        if widget.get_active():
+    def show_scorecard_cb(self, widget, match_item):
+        if widget.get_active():     # ON state
             # remember the 'id' of the match; needed when upstream list is updated
             self.open_scorecard.add(match_item['id'])
             self.show_submenu(match_item)
-        else:
+        else:                       # OFF state
             if match_item['id'] in self.open_scorecard:
                 self.open_scorecard.remove(match_item['id'])
             self.hide_submenu(match_item)
