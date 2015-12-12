@@ -7,11 +7,11 @@ if 'bdist_wheel' in sys.argv:
     raise RuntimeError("This setup.py does not support wheels")
 
 if (sys.version_info[0]*10 + sys.version_info[1]) < 26:
-    sys.exit('Sorry, Python < 2.6 is not supported')
+    raise RuntimeError('Sorry, Python < 2.6 is not supported')
 
 setup(
 	name             = "cricket_score_indicator",
-	version          = "3.6",
+	version          = "4.0",
 	author           = "Nishant Kukreja, Abhishek",
 	author_email     = "kukreja34@gmail.com",
         maintainer       = "Abhishek",
