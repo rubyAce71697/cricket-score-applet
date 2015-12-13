@@ -6,12 +6,13 @@ import requests
 
 BASE_URL = "http://espncricinfo.com"
 SUMMARY_URL = BASE_URL + "/netstorage/summary.json"
-MATCH_URL = lambda match_url: BASE_URL + match_url[:-4] + "json"    # remove `html' and add `json'
+# remove `html' and add `json'
+MATCH_URL = lambda match_url: BASE_URL + match_url[:-4] + "json"
 # parameters which will be sent with each request
 REQUEST_PARAM = {
         'Host':            "www.espncricinfo.com",
         'User-Agent':      "Mozilla/5.0 (X11; Linux) Firefox",
-        'Accept':          "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        'Accept':          "text/html;q=0.9,*/*;q=0.8",
         'Accept-Encoding': "gzip,deflate",
         'Cookie':          "",
         'Connection':      "keep-alive",
@@ -42,7 +43,7 @@ def get_matches_summary():
     dom_matches = []
 
     try:
-        summary = (requests.get(SUMMARY_URL, timeout = 5)).json()
+        summary = (requests.get(SUMMARY_URL, timeout=5)).json()
     except Exception as err:
         print ('get_matches_summary: Exception: ', err, file=sys.stderr)
         return None, None
@@ -107,7 +108,7 @@ def get_match_data(match):
     """
 
     try:
-        json_data = (requests.get(MATCH_URL(match['url']), headers = REQUEST_PARAM, timeout = 10)).json()
+        json_data = (requests.get(MATCH_URL(match['url']), headers=REQUEST_PARAM, timeout=10)).json()
     except Exception as err:
         print ('get_match_data: Exception: ', err, file=sys.stderr)
         return None
@@ -169,7 +170,12 @@ def get_match_data(match):
                                     player_name      = player_name,
                                     runs             = item['out_player']['runs'],
                                     balls            = item['out_player']['balls_faced'],
-                                    dismissal_string = item['out_player']['dismissal_string'].replace("&amp;","&").replace("&nbsp;"," ").replace("&bull;","0").replace("&dagger;", "(wk)").replace("*", "(c)")
+                                    dismissal_string = item['out_player']['dismissal_string'].
+                                    			replace("&amp;", "&").
+                                    			replace("&nbsp;", " ").
+                                    			replace("&bull;", "0").
+                                    			replace("&dagger;", "(wk)").
+                                    			replace("*", "(c)")
                                 )
                 break
 
@@ -212,9 +218,9 @@ def get_match_data(match):
                 t = t[0].split(',')
 
                 scorecard += "\n\nBatsman:   runs\n" +\
-                                 "\n".join("{player_score_ball}".format(player_score_ball = x)\
+                                 "\n".join("{player_score_ball}".format(player_score_ball=x)\
                                             for x in t[1:-1]) +\
-                                 "\n\nBowlers:   wickets/runs\n{player_score_ball}".format(player_score_ball = t[-1])
+                                 "\n\nBowlers:   wickets/runs\n{player_score_ball}".format(player_score_ball=t[-1])
 
     # cat all to form the scoreboard
     match['scorecard'] = scorecard
@@ -223,9 +229,9 @@ def get_match_data(match):
 
     ### setting 'last_ball'
     if 'won by' in match['scorecard']:
-        match['last_ball'] = "won"
+        match['last_ball'] = "V"
     elif json_data['live']['recent_overs']:
-        match['last_ball'] = (json_data['live']['recent_overs'][-1][-1]['ball']).replace('&bull;', '0')
+        match['last_ball'] = (json_data['live']['recent_overs'][-1][-1]['ball']).replace('&bull;', '0')[0]
     else:
         match['last_ball'] = DEFAULT_ICON
 
