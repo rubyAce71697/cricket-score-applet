@@ -76,7 +76,7 @@ def get_matches_summary():
             team1_abbrev = m_val['team1_abbrev'].strip().replace('&nbsp;', ' '),
             team1score   = (' - ' + m_val['team1_score'].strip().replace('&nbsp;', ' ').replace('&amp;', '&'))\
                             if m_val['team1_score'].strip() else '',
-            team2_abbrev = m_val['team2_abbrev'].strip().replace('&nbsp;',  ' '),
+            team2_abbrev = m_val['team2_abbrev'].strip().replace('&nbsp;', ' '),
             team2score   = (' - ' + m_val['team2_score'].strip().replace('&nbsp;', ' ').replace('&amp;', '&'))\
                             if m_val['team2_score'].strip() else '',
             startstring  = (' at ' + m_val['start_string'].strip().replace('&nbsp;', ' '))\

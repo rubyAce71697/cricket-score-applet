@@ -2,6 +2,7 @@
 
 from distutils.core import setup
 import sys
+import glob
 
 if 'bdist_wheel' in sys.argv:
     raise RuntimeError("This setup.py does not support wheels")
@@ -11,7 +12,7 @@ if (sys.version_info[0]*10 + sys.version_info[1]) < 26:
 
 setup(
 	name             = "cricket_score_indicator",
-	version          = "4.0pre",
+	version          = "4.0pre2",
 	author           = "Nishant Kukreja, Abhishek",
 	author_email     = "kukreja34@gmail.com",
         maintainer       = "Abhishek",
@@ -21,9 +22,9 @@ setup(
 	keywords         = "Cricket Scores Live Indicator Applet AppIndicator Unity GTK",
 	url              = "https://github.com/rubyAce71697/cricket-score-applet",
 	packages         = ["cricket_score_indicator"],
-	package_data     = {"cricket_score_indicator": ["icons/*"]},
-	data_files       = [(sys.prefix + "/share/icons/hicolor/scalable/apps", ["cricket_score_indicator/icons/cricscore_indicator.svg"]),
-	                    (sys.prefix + "/share/pixmaps", ["cricket_score_indicator/icons/cricscore_indicator.svg"]),
+	data_files       = [(sys.prefix + "/share/icons/hicolor/24x24/apps", glob.glob("icons/dark/*")),
+	                    (sys.prefix + "/share/icons/ubuntu-mono-dark/apps/24", glob.glob("icons/dark/*")),
+	                    (sys.prefix + "/share/icons/ubuntu-mono-light/apps/24", glob.glob("icons/light/*")),
 	                    (sys.prefix + "/share/applications", ["cricscore_indicator.desktop"])],
 	scripts          = ["cricscore_indicator"],
 	long_description = open("README").read(),

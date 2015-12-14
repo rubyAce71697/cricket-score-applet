@@ -1,10 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from gi.repository import Gtk, Gdk, GObject, GdkPixbuf
+from gi.repository import Gtk, Gdk, GObject
 from gi.repository import AppIndicator3 as appindicator
 
-from os import path
 import threading
 import time
 import signal
@@ -13,7 +12,13 @@ from cricket_score_indicator.espn_scrap import get_matches_summary, get_match_da
 
 # the timeout between each fetch
 REFRESH_INTERVAL = 10 # second(s)
-ICON_PATH = path.join(path.abspath(path.dirname(__file__)), "icons/")
+ICON_PREFIX="cricscore_indicator-"
+
+# DEBUG=1
+# from os import path
+# ICON_PATH = path.join(path.abspath(path.dirname(__file__)), "..", "icons")
+# DARK_ICONS = path.join(ICON_PATH, "dark")
+# LIGHT_ICONS = path.join(ICON_PATH, "light")
 
 class CricInd:
     def __init__(self):
@@ -21,13 +26,15 @@ class CricInd:
         Initialize appindicator and other menus
         """
         self.indicator = appindicator.Indicator.new("cricket-indicator",
-                            ICON_PATH + DEFAULT_ICON + ".png",
+                            ICON_PREFIX + DEFAULT_ICON,
                             appindicator.IndicatorCategory.APPLICATION_STATUS)
+        # if DEBUG:
+        #     self.indicator.set_icon_theme_path(DARK_ICONS)
 
         self.indicator.set_status(appindicator.IndicatorStatus.ACTIVE)
         self.indicator.set_label("Loading", "")
         self.indicator.connect("scroll-event", self.scroll_event_cb)
-        self.indicator.set_menu(self.menu_setup())
+        self.menu_setup()
 
         # the 'id' of match selected for display as indicator label
         self.label_match_id = None
@@ -35,8 +42,6 @@ class CricInd:
         self.open_scorecard = set()
         self.intl_menu = []
         self.dom_menu = []
-
-        # TODO: cache images
 
     def main(self):
         """
@@ -92,6 +97,13 @@ class CricInd:
 
         menu.append(about_item)
 
+        # if DEBUG:
+        #     theme_item = Gtk.MenuItem("Change theme")
+        #     theme_item.connect("activate", self.change_icon_theme)
+        #     theme_item.show()
+
+        #     menu.append(theme_item)
+
         #we need a way to quit if the indicator is irritating ;-)
         quit_item = Gtk.MenuItem("Quit")
         quit_item.connect("activate", quit_indicator)
@@ -99,7 +111,16 @@ class CricInd:
 
         menu.append(quit_item)
 
-        return menu
+        self.indicator.set_menu(menu)
+        # if DEBUG:
+        #     self.indicator.set_secondary_activate_target(theme_item)
+
+    # def change_icon_theme(self, widget):
+    #     if DEBUG:
+    #         if self.indicator.get_icon_theme_path() == DARK_ICONS:
+    #             self.indicator.set_icon_theme_path(LIGHT_ICONS)
+    #         else:
+    #             self.indicator.set_icon_theme_path(DARK_ICONS)
 
     def show_scorecard_cb(self, widget, match_item):
         if widget.get_active():     # ON state
@@ -160,7 +181,7 @@ class CricInd:
                 "last_ball":       match_info['last_ball'],
                 }
 
-        match_item['gtk_menu'].set_image(Gtk.Image.new_from_file(ICON_PATH + match_info['last_ball'] + ".png"))
+        match_item['gtk_menu'].set_image(Gtk.Image.new_from_icon_name(ICON_PREFIX + match_info['last_ball'], Gtk.IconSize.BUTTON))
         match_item['gtk_menu'].set_always_show_image(True)
 
         match_item['gtk_set_as_label'].connect("activate", self.set_as_label_cb, match_item)
@@ -205,8 +226,6 @@ class CricInd:
         Process scroll-event(s)
         Change indicator label to next/prev in list depending on direction
         """
-        # print("Scrolling detected: Args: self ", self,
-        #     "obj ", obj, "delta ", delta, "direction ", direction)
         if self.label_match_id is None:
             return
 
@@ -355,7 +374,7 @@ class CricInd:
         self.indicator.set_label(label, "Cricket Score Indicator")
 
     def set_indicator_icon(self, icon):
-        self.indicator.set_icon(ICON_PATH + icon + ".png")
+        self.indicator.set_icon(ICON_PREFIX + icon)
 
     def add_menu(self, widget, pos):
         self.indicator.get_menu().insert(widget, pos)
@@ -369,8 +388,7 @@ class CricInd:
         match_item['gtk_commentary'].set_label(match_info['comms'])
 
     def update_menu_icon(self, match_info):
-        match_info['gtk_menu'].set_image(Gtk.Image.new_from_file(
-                                ICON_PATH + match_info['last_ball'] + ".png"))
+        match_info['gtk_menu'].set_image(Gtk.Image.new_from_icon_name(ICON_PREFIX + match_info['last_ball'], Gtk.IconSize.BUTTON))
 
 def run():
     """
@@ -393,7 +411,7 @@ def about(widget):
     dialog.set_website("https://github.com/rubyAce71697/cricket-score-applet")
     dialog.set_website_label("Github page")
     dialog.set_comments("Displays live scores from ESPN website in your indicator panel")
-    dialog.set_logo(GdkPixbuf.Pixbuf.new_from_file(ICON_PATH + "cricscore_indicator" + ".svg"))
+    dialog.set_logo_icon_name("cricscore_indicator")
 
     dialog.run()
     dialog.destroy()
