@@ -88,6 +88,9 @@ class CricInd:
         sep_item = Gtk.SeparatorMenuItem.new()
         sep_item.show()
 
+        # hide our middle-click callback inside the separator
+        sep_item.connect("activate", self.middle_click_cb)
+
         menu.append(sep_item)
 
         # some self promotion
@@ -112,8 +115,29 @@ class CricInd:
         menu.append(quit_item)
 
         self.indicator.set_menu(menu)
-        # if DEBUG:
-        #     self.indicator.set_secondary_activate_target(theme_item)
+        # use the separator's cb for toggling scoreboard
+        self.indicator.set_secondary_activate_target(sep_item)
+
+    def middle_click_cb(self, widget):
+        if self.label_match_id is None:
+            return
+
+        match_item = None
+        # linear search FTW
+        for i, v in enumerate(self.intl_menu):
+            if v['id'] == self.label_match_id:
+                match_item = v
+                break
+        else:
+            for i, v in enumerate(self.dom_menu):
+                if v['id'] == self.label_match_id:
+                    match_item = v
+                    break
+        if match_item is None:
+            return
+
+        # simulate the button-click
+        match_item['gtk_check'].set_active(not match_item['gtk_check'].get_active())
 
     # def change_icon_theme(self, widget):
     #     if DEBUG:
@@ -230,6 +254,7 @@ class CricInd:
             return
 
         index = -1
+        # linear search FTW
         for i, v in enumerate(self.intl_menu):
             if v['id'] == self.label_match_id:
                 index = i
@@ -243,9 +268,10 @@ class CricInd:
             return
 
         if direction == Gdk.ScrollDirection.DOWN:
-            self.set_as_label_cb(None, (self.intl_menu + self.dom_menu)[(index-1)%len(self.intl_menu+self.dom_menu)])
+            # activate the button
+            (self.intl_menu + self.dom_menu)[(index-1)%len(self.intl_menu+self.dom_menu)]['gtk_set_as_label'].activate()
         else:
-            self.set_as_label_cb(None, (self.intl_menu + self.dom_menu)[(index+1)%len(self.intl_menu+self.dom_menu)])
+            (self.intl_menu + self.dom_menu)[(index+1)%len(self.intl_menu+self.dom_menu)]['gtk_set_as_label'].activate()
 
     def main_update_data(self):
         while True:
