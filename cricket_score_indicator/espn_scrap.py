@@ -7,7 +7,9 @@ import requests
 BASE_URL = "http://espncricinfo.com"
 SUMMARY_URL = BASE_URL + "/netstorage/summary.json"
 # remove `html' and add `json'
-MATCH_URL = lambda match_url: BASE_URL + match_url[:-4] + "json"
+MATCH_URL_JSON = lambda match_url: BASE_URL + match_url[:-4] + "json"
+MATCH_URL_HTML = lambda match_url: BASE_URL + match_url
+
 # parameters which will be sent with each request
 REQUEST_PARAM = {
         'Host':            "www.espncricinfo.com",
@@ -89,9 +91,9 @@ def get_matches_summary():
                 'id':          m_id,
                 'url':         m_val['url'],
                 'scoreline':   summaryline,
-                'scorecard':   'Loading',
-                'description': 'Loading',
-                'comms':       'Loading',
+                'scorecard':   "Loading",
+                'description': "Loading",
+                'comms':       "",
                 'last_ball':   DEFAULT_ICON,
                 'intl':        m_id in intl
                 }
@@ -102,17 +104,18 @@ def get_matches_summary():
 
     return intl_matches, dom_matches
 
-def get_match_data(match):
+def get_match_data(match_url):
     """
-    returns detailed match data (match_info) for `match`
+    returns detailed match data (match_info) for `match_url`
     """
 
     try:
-        json_data = (requests.get(MATCH_URL(match['url']), headers=REQUEST_PARAM, timeout=10)).json()
+        json_data = (requests.get(MATCH_URL_JSON(match_url), headers=REQUEST_PARAM, timeout=10)).json()
     except Exception as err:
         print ('get_match_data: Exception: ', err, file=sys.stderr)
         return None
 
+    match = {}
     ### setting 'description'
     """
     split description into parts.
@@ -228,7 +231,7 @@ def get_match_data(match):
     ########################################
 
     ### setting 'last_ball'
-    if 'won by' in match['scorecard']:
+    if 'won by' in match['scorecard'] or 'drawn' in match['scorecard']:
         match['last_ball'] = "V"
     elif json_data['live']['recent_overs']:
         match['last_ball'] = (json_data['live']['recent_overs'][-1][-1]['ball']).replace('&bull;', '0')[0]

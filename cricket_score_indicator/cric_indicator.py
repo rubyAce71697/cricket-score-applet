@@ -1,14 +1,20 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 
+import gi.repository
+
+gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, Gdk, GObject
+
+gi.require_version('AppIndicator3', '0.1')
 from gi.repository import AppIndicator3 as appindicator
 
 import threading
 import time
 import signal
+import webbrowser
 
-from cricket_score_indicator.espn_scrap import get_matches_summary, get_match_data, DEFAULT_ICON
+from cricket_score_indicator.espn_scrap import get_matches_summary, get_match_data, DEFAULT_ICON, MATCH_URL_HTML
 
 # the timeout between each fetch
 REFRESH_INTERVAL = 10 # second(s)
@@ -160,11 +166,11 @@ class CricInd:
     def contract_submenu(self, match_item):
         match_item['gtk_check'].set_active(False)
         match_item['gtk_description'].hide()
-        match_item['gtk_seperator_2'].hide()
+        match_item['gtk_separator_2'].hide()
         match_item['gtk_scorecard'].hide()
-        match_item['gtk_seperator_3'].hide()
+        match_item['gtk_separator_3'].hide()
         match_item['gtk_commentary'].hide()
-        match_item['gtk_seperator_4'].hide()
+        match_item['gtk_separator_4'].hide()
 
         match_item['last_ball'] = DEFAULT_ICON   # set to default
 
@@ -176,33 +182,35 @@ class CricInd:
     def expand_submenu(self, match_item):
         match_item['gtk_check'].set_active(True)
         match_item['gtk_description'].show()
-        match_item['gtk_seperator_2'].show()
+        match_item['gtk_separator_2'].show()
         match_item['gtk_scorecard'].show()
-        match_item['gtk_seperator_3'].show()
-        match_item['gtk_commentary'].show()
-        match_item['gtk_seperator_4'].show()
+        match_item['gtk_separator_3'].show()
+        if match_item['gtk_commentary'].get_label() != "":
+            match_item['gtk_commentary'].show()
+            match_item['gtk_separator_4'].show()
 
     def create_match_item(self, match_info):
         match_item = {
                 # GTK stuff
-                'gtk_menu':        Gtk.ImageMenuItem.new_with_label(match_info['scoreline']),
+                'gtk_menu':                  Gtk.ImageMenuItem.new_with_label(match_info['scoreline']),
                 # NOTE: Gtk.ImageMenuItem has been deprecated in GTK 3.10
-                'gtk_submenu':     Gtk.Menu.new(),
-                'gtk_set_as_label':Gtk.MenuItem.new_with_label("Set as label"),
-                'gtk_description': Gtk.MenuItem.new_with_label(match_info['description']),
-                'gtk_scorecard':   Gtk.MenuItem.new_with_label(match_info['scorecard']),
-                'gtk_commentary':  Gtk.MenuItem.new_with_label(match_info['comms']),
-                'gtk_check':       Gtk.CheckMenuItem.new_with_label("Scorecard"),
+                'gtk_submenu':               Gtk.Menu.new(),
+                'gtk_set_as_label':          Gtk.MenuItem.new_with_label("Set as label"),
+                'gtk_description':           Gtk.MenuItem.new_with_label(match_info['description']),
+                'gtk_scorecard':             Gtk.MenuItem.new_with_label(match_info['scorecard']),
+                'gtk_commentary':            Gtk.MenuItem.new_with_label(match_info['comms']),
+                'gtk_check':                 Gtk.CheckMenuItem.new_with_label("Scorecard"),
+                'gtk_open_in_browser':       Gtk.MenuItem.new_with_label('Open in browser'),
 
-                'gtk_seperator_1': Gtk.SeparatorMenuItem().new(),
-                'gtk_seperator_2': Gtk.SeparatorMenuItem().new(),
-                'gtk_seperator_3': Gtk.SeparatorMenuItem().new(),
-                'gtk_seperator_4': Gtk.SeparatorMenuItem().new(),
+                'gtk_separator_1':           Gtk.SeparatorMenuItem().new(),
+                'gtk_separator_2':           Gtk.SeparatorMenuItem().new(),
+                'gtk_separator_3':           Gtk.SeparatorMenuItem().new(),
+                'gtk_separator_4':           Gtk.SeparatorMenuItem().new(),
 
                 # our stuff
-                'id':              match_info['id'],
-                'url':             match_info['url'],
-                "last_ball":       match_info['last_ball'],
+                'id':                        match_info['id'],
+                'url':                       match_info['url'],
+                "last_ball":                 match_info['last_ball'],
                 }
 
         match_item['gtk_menu'].set_image(Gtk.Image.new_from_icon_name(ICON_PREFIX + match_info['last_ball'], Gtk.IconSize.BUTTON))
@@ -214,24 +222,27 @@ class CricInd:
         match_item['gtk_commentary'].set_sensitive(False)
         match_item['gtk_check'].set_active(False)
         match_item['gtk_check'].connect("toggled", self.show_scorecard_cb, match_item)
+        match_item['gtk_open_in_browser'].connect("activate", self.open_in_browser_cb, match_item)
 
         match_item['gtk_submenu'].append(match_item['gtk_set_as_label'])
-        match_item['gtk_submenu'].append(match_item['gtk_seperator_1'])
+        match_item['gtk_submenu'].append(match_item['gtk_separator_1'])
         match_item['gtk_submenu'].append(match_item['gtk_description'])
-        match_item['gtk_submenu'].append(match_item['gtk_seperator_2'])
+        match_item['gtk_submenu'].append(match_item['gtk_separator_2'])
         match_item['gtk_submenu'].append(match_item['gtk_scorecard'])
-        match_item['gtk_submenu'].append(match_item['gtk_seperator_3'])
+        match_item['gtk_submenu'].append(match_item['gtk_separator_3'])
         match_item['gtk_submenu'].append(match_item['gtk_commentary'])
-        match_item['gtk_submenu'].append(match_item['gtk_seperator_4'])
+        match_item['gtk_submenu'].append(match_item['gtk_separator_4'])
         match_item['gtk_submenu'].append(match_item['gtk_check'])
+        match_item['gtk_submenu'].append(match_item['gtk_open_in_browser'])
 
         match_item['gtk_menu'].set_submenu(match_item['gtk_submenu'])
 
         # everything is "hidden" by default, so we call "show"
         match_item['gtk_menu'].show()
         match_item['gtk_set_as_label'].show()
-        match_item['gtk_seperator_1'].show()
+        match_item['gtk_separator_1'].show()
         match_item['gtk_check'].show()
+        match_item['gtk_open_in_browser'].show()
 
         return match_item
 
@@ -272,6 +283,9 @@ class CricInd:
             (self.intl_menu + self.dom_menu)[(index-1)%len(self.intl_menu+self.dom_menu)]['gtk_set_as_label'].activate()
         else:
             (self.intl_menu + self.dom_menu)[(index+1)%len(self.intl_menu+self.dom_menu)]['gtk_set_as_label'].activate()
+
+    def open_in_browser_cb(self, widget, match_item):
+        webbrowser.open(MATCH_URL_HTML(match_item['url']))
 
     def main_update_data(self):
         while True:
@@ -380,19 +394,19 @@ class CricInd:
         for thread in threads:
             thread.join()
 
-    def update_submenu_data(self, m):
-        match_info = get_match_data(m)
+    def update_submenu_data(self, match_item):
+        match_info = get_match_data(match_item['url'])
 
         if match_info is None:
             return
         # we've been away for a while, some things may have changed
-        if m['gtk_check'].get_active():
-            m['last_ball'] = match_info['last_ball']
+        if match_item['gtk_check'].get_active():
+            match_item['last_ball'] = match_info['last_ball']
 
-            GObject.idle_add(self.update_menu_icon, m)
-            GObject.idle_add(self.set_submenu_items, m, match_info)
+            GObject.idle_add(self.update_menu_icon, match_item)
+            GObject.idle_add(self.set_submenu_items, match_item, match_info)
 
-            if match_info['id'] == self.label_match_id:
+            if match_item['id'] == self.label_match_id:
                 GObject.idle_add(self.set_indicator_icon, match_info['last_ball'])
 
     ### Helpers
@@ -413,8 +427,8 @@ class CricInd:
         match_item['gtk_description'].set_label(match_info['description'])
         match_item['gtk_commentary'].set_label(match_info['comms'])
 
-    def update_menu_icon(self, match_info):
-        match_info['gtk_menu'].set_image(Gtk.Image.new_from_icon_name(ICON_PREFIX + match_info['last_ball'], Gtk.IconSize.BUTTON))
+    def update_menu_icon(self, match_item):
+        match_item['gtk_menu'].set_image(Gtk.Image.new_from_icon_name(ICON_PREFIX + match_item['last_ball'], Gtk.IconSize.BUTTON))
 
 def run():
     """
