@@ -18,6 +18,15 @@ KDE is not supported.
 
 Ubuntu/Debian users should use the PPA which automatically pulls dependencies.
 
+Changes (New in 4.0)
+====================
+* Scroll over panel text/icon to cycle through the match list
+* Middle-click on panel text/icon to expand the current match's scorecard
+* Added "Open in browser" option
+* Enabled light theme (ubuntu-mono-light) support
+
+.. image:: screenshots/out.gif
+
 Instructions
 ==================
 
