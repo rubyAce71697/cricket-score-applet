@@ -56,39 +56,41 @@ class CricInd:
         # handle 'C-c'
         signal.signal(signal.SIGINT, signal.SIG_DFL)
 
-        thread = threading.Thread(target=self.main_update_data)
-        thread.daemon = True
-        thread.start()
+        self.thread = threading.Thread(target=self.main_update_data)
+        self.thread.daemon = True
+        self.thread.start()
 
         Gtk.main()
 
     def menu_setup(self):
         """
-        Setup the Gtk menu of the indicator
+        Setup the Gtk self.menu of the indicator
         """
-        menu = Gtk.Menu.new()
+        self.flag = 1
+        self.middleClickID = 0
+        self.menu = Gtk.Menu.new()
 
         intl_header = Gtk.MenuItem.new_with_label("INTERNATIONAL")
         intl_header.set_sensitive(False)
         intl_header.show()
 
-        menu.append(intl_header)
+        self.menu.append(intl_header)
 
         intl_sep = Gtk.SeparatorMenuItem.new()
         intl_sep.show()
 
-        menu.append(intl_sep)
+        self.menu.append(intl_sep)
 
         dom_header = Gtk.MenuItem.new_with_label("DOMESTIC")
         dom_header.set_sensitive(False)
         dom_header.show()
 
-        menu.append(dom_header)
+        self.menu.append(dom_header)
 
         dom_sep = Gtk.SeparatorMenuItem.new()
         dom_sep.show()
 
-        menu.append(dom_sep)
+        self.menu.append(dom_sep)
 
         # separate out matches from "About" and "Quit"
         sep_item = Gtk.SeparatorMenuItem.new()
@@ -97,32 +99,71 @@ class CricInd:
         # hide our middle-click callback inside the separator
         sep_item.connect("activate", self.middle_click_cb)
 
-        menu.append(sep_item)
+        self.menu.append(sep_item)
 
         # some self promotion
         about_item = Gtk.MenuItem("About")
         about_item.connect("activate", about)
         about_item.show()
 
-        menu.append(about_item)
+        self.menu.append(about_item)
 
         # if DEBUG:
         #     theme_item = Gtk.MenuItem("Change theme")
         #     theme_item.connect("activate", self.change_icon_theme)
         #     theme_item.show()
 
-        #     menu.append(theme_item)
+        #     self.menu.append(theme_item)
 
         #we need a way to quit if the indicator is irritating ;-)
         quit_item = Gtk.MenuItem("Quit")
         quit_item.connect("activate", quit_indicator)
         quit_item.show()
 
-        menu.append(quit_item)
+        self.menu.append(quit_item)
 
-        self.indicator.set_menu(menu)
+        self.indicator.set_menu(self.menu)
+        
+        #create menu for middle click
+        self.create_scorecard_menu()
+
         # use the separator's cb for toggling scoreboard
         self.indicator.set_secondary_activate_target(sep_item)
+
+    def create_scorecard_menu(self):
+    	self.scoreboardMenu = Gtk.Menu.new()
+    	descriptionItem = Gtk.MenuItem("This is desctiption item")
+    	scorecardItem = Gtk.MenuItem("This is sorecard")
+    	commentaryItem = Gtk.MenuItem("Commentary is Loading")
+    	quitItem = Gtk.MenuItem("Quit")
+    	aboutItem = Gtk.MenuItem("About")
+    	toogleItem = Gtk.MenuItem("Back to List")
+    	quitItem.connect("activate",quit_indicator)
+    	aboutItem.connect("activate",about)
+
+    	self.scoreboardMenu.append(descriptionItem)
+    	self.scoreboardMenu.append(Gtk.SeparatorMenuItem())
+
+    	self.scoreboardMenu.append(scorecardItem)
+    	self.scoreboardMenu.append(Gtk.SeparatorMenuItem())
+    	self.scoreboardMenu.append(commentaryItem)
+
+    	self.scoreboardMenu.append(Gtk.SeparatorMenuItem())
+    	self.scoreboardMenu.append(toogleItem)
+    	self.scoreboardMenu.append(aboutItem)
+    	self.scoreboardMenu.append(quitItem)
+    	descriptionItem.show()
+    	scorecardItem.show()
+    	commentaryItem.show()
+    	quitItem.show()
+    	toogleItem.show()
+    	aboutItem.show()
+    	self.scoreboardMenu.get_children()[1].show()
+    	self.scoreboardMenu.get_children()[3].show()
+    	self.scoreboardMenu.get_children()[5].show()
+
+
+
 
     def middle_click_cb(self, widget):
         if self.label_match_id is None:
@@ -133,6 +174,7 @@ class CricInd:
         for i, v in enumerate(self.intl_menu):
             if v['id'] == self.label_match_id:
                 match_item = v
+
                 break
         else:
             for i, v in enumerate(self.dom_menu):
@@ -143,7 +185,21 @@ class CricInd:
             return
 
         # simulate the button-click
-        match_item['gtk_check'].set_active(not match_item['gtk_check'].get_active())
+        
+        match_item['gtk_check'].set_active(True)
+        self.scoreboardMenu.get_children()[0].set_label(match_item['gtk_menu'].get_label())
+        self.scoreboardMenu.get_children()[2].set_label(match_item['gtk_scorecard'].get_label()) 
+        self.scoreboardMenu.get_children()[4].set_label(match_item['gtk_commentary'].get_label())       
+
+       
+       #	self.indicator.set_menu(self.scoreboardMenu)
+       	self.scoreboardMenu.popup(None,None,None,None,0,0)
+
+       
+
+        	
+
+
 
     # def change_icon_theme(self, widget):
     #     if DEBUG:
@@ -288,7 +344,7 @@ class CricInd:
         webbrowser.open(MATCH_URL_HTML(match_item['url']))
 
     def main_update_data(self):
-        while True:
+        while self.flag:
             start = time.time() # get UNIX time
             self.update_labels()
             self.update_sublabels()
@@ -408,6 +464,7 @@ class CricInd:
 
             if match_item['id'] == self.label_match_id:
                 GObject.idle_add(self.set_indicator_icon, match_info['last_ball'])
+                GObject.idle_add(self.setScoreBoardMenu,match_info)
 
     ### Helpers
     def set_indicator_label(self, label):
@@ -421,6 +478,12 @@ class CricInd:
 
     def remove_menu(self, widget):
         self.indicator.get_menu().remove(widget)
+
+    def setScoreBoardMenu(self,match_info):
+    	self.scoreboardMenu.get_children()[0].set_label(match_info['description'])
+    	self.scoreboardMenu.get_children()[2].set_label(match_info['scorecard'])
+    	self.scoreboardMenu.get_children()[4].set_label(match_info['comms'])
+
 
     def set_submenu_items(self, match_item, match_info):
         match_item['gtk_scorecard'].set_label(match_info['scorecard'])
@@ -458,3 +521,5 @@ def about(widget):
 
 if __name__ == "__main__":
     print ("Use 'cricscore_indicator' to run the applet")
+    my_indicator = CricInd()
+    my_indicator.main()
