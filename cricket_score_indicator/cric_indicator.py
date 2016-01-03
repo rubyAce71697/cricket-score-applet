@@ -5,6 +5,7 @@ import gi.repository
 
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, Gdk, GObject
+from gi.repository import Notify
 
 gi.require_version('AppIndicator3', '0.1')
 from gi.repository import AppIndicator3 as appindicator
@@ -28,6 +29,10 @@ ICON_PREFIX="cricscore_indicator-"
 
 class CricInd:
     def __init__(self):
+
+    	Notify.init("cricket score indicator")
+    	self.notification = Notify.Notification.new("")
+    	self.notification.set_app_name("Cricket Score")
         """
         Initialize appindicator and other menus
         """
@@ -156,7 +161,7 @@ class CricInd:
     	scorecardItem.show()
     	commentaryItem.show()
     	quitItem.show()
-    	toogleItem.show()
+    	#toogleItem.show()
     	aboutItem.show()
     	self.scoreboardMenu.get_children()[1].show()
     	self.scoreboardMenu.get_children()[3].show()
@@ -193,7 +198,7 @@ class CricInd:
 
        
        #	self.indicator.set_menu(self.scoreboardMenu)
-       	self.scoreboardMenu.popup(None,None,None,None,0,0)
+       	self.scoreboardMenu.popup(None,self.menu,None,None,0,0)
 
        
 
@@ -234,6 +239,7 @@ class CricInd:
         self.update_menu_icon(match_item)
         if match_item['id'] == self.label_match_id:
             self.set_indicator_icon(match_item['last_ball'])
+
 
     def expand_submenu(self, match_item):
         match_item['gtk_check'].set_active(True)
@@ -465,6 +471,18 @@ class CricInd:
             if match_item['id'] == self.label_match_id:
                 GObject.idle_add(self.set_indicator_icon, match_info['last_ball'])
                 GObject.idle_add(self.setScoreBoardMenu,match_info)
+                
+                if match_item['last_ball'] in ['4','6','W',]:
+	                
+	                self.notification.update(
+	            	match_item['gtk_menu'].get_label(),
+	            	match_item['gtk_scorecard'].get_label() + match_item['gtk_commentary'].get_label(),
+	            	ICON_PREFIX + match_info['last_ball']
+
+
+	            	)
+	            	
+	            	self.notification.show()
 
     ### Helpers
     def set_indicator_label(self, label):
@@ -491,6 +509,7 @@ class CricInd:
         match_item['gtk_commentary'].set_label(match_info['comms'])
 
     def update_menu_icon(self, match_item):
+
         match_item['gtk_menu'].set_image(Gtk.Image.new_from_icon_name(ICON_PREFIX + match_item['last_ball'], Gtk.IconSize.BUTTON))
 
 def run():
