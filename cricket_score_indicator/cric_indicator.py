@@ -14,12 +14,14 @@ import threading
 import time
 import signal
 import webbrowser
+import sys
 
 from cricket_score_indicator.espn_scrap import get_matches_summary, get_match_data, DEFAULT_ICON, MATCH_URL_HTML
 
 # the timeout between each fetch
 REFRESH_INTERVAL = 10 # second(s)
-ICON_PREFIX="cricscore_indicator-"
+ICON_PREFIX= "cricscore_indicator-"
+ICON_SUFFIX = ".png"
 
 # DEBUG=1
 # from os import path
@@ -30,14 +32,14 @@ ICON_PREFIX="cricscore_indicator-"
 class CricInd:
     def __init__(self):
 
-    	Notify.init("cricket score indicator")
-    	self.notification = Notify.Notification.new("")
-    	self.notification.set_app_name("Cricket Score")
+        Notify.init("cricket score indicator")
+        self.notification = Notify.Notification.new("")
+        self.notification.set_app_name("Cricket Score")
         """
         Initialize appindicator and other menus
         """
         self.indicator = appindicator.Indicator.new("cricket-indicator",
-                            ICON_PREFIX + DEFAULT_ICON,
+                            ICON_PREFIX + DEFAULT_ICON ,
                             appindicator.IndicatorCategory.APPLICATION_STATUS)
         # if DEBUG:
         #     self.indicator.set_icon_theme_path(DARK_ICONS)
@@ -136,36 +138,36 @@ class CricInd:
         self.indicator.set_secondary_activate_target(sep_item)
 
     def create_scorecard_menu(self):
-    	self.scoreboardMenu = Gtk.Menu.new()
-    	descriptionItem = Gtk.MenuItem("This is desctiption item")
-    	scorecardItem = Gtk.MenuItem("This is sorecard")
-    	commentaryItem = Gtk.MenuItem("Commentary is Loading")
-    	quitItem = Gtk.MenuItem("Quit")
-    	aboutItem = Gtk.MenuItem("About")
-    	toogleItem = Gtk.MenuItem("Back to List")
-    	quitItem.connect("activate",quit_indicator)
-    	aboutItem.connect("activate",about)
+        self.scoreboardMenu = Gtk.Menu.new()
+        descriptionItem = Gtk.MenuItem("This is desctiption item")
+        scorecardItem = Gtk.MenuItem("This is sorecard")
+        commentaryItem = Gtk.MenuItem("Commentary is Loading")
+        quitItem = Gtk.MenuItem("Quit")
+        aboutItem = Gtk.MenuItem("About")
+        toogleItem = Gtk.MenuItem("Back to List")
+        quitItem.connect("activate",quit_indicator)
+        aboutItem.connect("activate",about)
 
-    	self.scoreboardMenu.append(descriptionItem)
-    	self.scoreboardMenu.append(Gtk.SeparatorMenuItem())
+        self.scoreboardMenu.append(descriptionItem)
+        self.scoreboardMenu.append(Gtk.SeparatorMenuItem())
 
-    	self.scoreboardMenu.append(scorecardItem)
-    	self.scoreboardMenu.append(Gtk.SeparatorMenuItem())
-    	self.scoreboardMenu.append(commentaryItem)
+        self.scoreboardMenu.append(scorecardItem)
+        self.scoreboardMenu.append(Gtk.SeparatorMenuItem())
+        self.scoreboardMenu.append(commentaryItem)
 
-    	self.scoreboardMenu.append(Gtk.SeparatorMenuItem())
-    	self.scoreboardMenu.append(toogleItem)
-    	self.scoreboardMenu.append(aboutItem)
-    	self.scoreboardMenu.append(quitItem)
-    	descriptionItem.show()
-    	scorecardItem.show()
-    	commentaryItem.show()
-    	quitItem.show()
-    	#toogleItem.show()
-    	aboutItem.show()
-    	self.scoreboardMenu.get_children()[1].show()
-    	self.scoreboardMenu.get_children()[3].show()
-    	self.scoreboardMenu.get_children()[5].show()
+        self.scoreboardMenu.append(Gtk.SeparatorMenuItem())
+        self.scoreboardMenu.append(toogleItem)
+        self.scoreboardMenu.append(aboutItem)
+        self.scoreboardMenu.append(quitItem)
+        descriptionItem.show()
+        scorecardItem.show()
+        commentaryItem.show()
+        quitItem.show()
+        #toogleItem.show()
+        aboutItem.show()
+        self.scoreboardMenu.get_children()[1].show()
+        self.scoreboardMenu.get_children()[3].show()
+        self.scoreboardMenu.get_children()[5].show()
 
 
 
@@ -197,12 +199,12 @@ class CricInd:
         self.scoreboardMenu.get_children()[4].set_label(match_item['gtk_commentary'].get_label())       
 
        
-       #	self.indicator.set_menu(self.scoreboardMenu)
-       	self.scoreboardMenu.popup(None,self.menu,None,None,0,0)
+       #    self.indicator.set_menu(self.scoreboardMenu)
+        self.scoreboardMenu.popup(None,self.menu,None,None,0,0)
 
        
 
-        	
+            
 
 
 
@@ -236,7 +238,9 @@ class CricInd:
         match_item['last_ball'] = DEFAULT_ICON   # set to default
 
         # force update in current cycle
+        
         self.update_menu_icon(match_item)
+        #GObject.idle_add(match_item['gtk_menu'].set_image,Gtk.Image.new_from_icon_name(ICON_PREFIX + match_item['last_ball'], Gtk.IconSize.BUTTON))
         if match_item['id'] == self.label_match_id:
             self.set_indicator_icon(match_item['last_ball'])
 
@@ -367,7 +371,7 @@ class CricInd:
         """
         intl_matches, dom_matches = get_matches_summary()
 
-        if intl_matches == None: 	# request failed! we've got nothing new
+        if intl_matches == None:    # request failed! we've got nothing new
             return
 
         # remove items
@@ -473,16 +477,17 @@ class CricInd:
                 GObject.idle_add(self.setScoreBoardMenu,match_info)
                 
                 if match_item['last_ball'] in ['4','6','W',]:
-	                
-	                self.notification.update(
-	            	match_item['gtk_menu'].get_label(),
-	            	match_item['gtk_scorecard'].get_label() + match_item['gtk_commentary'].get_label(),
-	            	ICON_PREFIX + match_info['last_ball']
+                    
+                    self.notification.update(
+                    match_item['gtk_menu'].get_label(),
+                    match_item['gtk_scorecard'].get_label() + match_item['gtk_commentary'].get_label(),
+                    ICON_PREFIX + match_info['last_ball'] 
 
 
-	            	)
-	            	
-	            	self.notification.show()
+                    )
+                    print "for notification : "  + ICON_PREFIX + match_info['last_ball']
+                    
+                    self.notification.show()
 
     ### Helpers
     def set_indicator_label(self, label):
@@ -498,9 +503,9 @@ class CricInd:
         self.indicator.get_menu().remove(widget)
 
     def setScoreBoardMenu(self,match_info):
-    	self.scoreboardMenu.get_children()[0].set_label(match_info['description'])
-    	self.scoreboardMenu.get_children()[2].set_label(match_info['scorecard'])
-    	self.scoreboardMenu.get_children()[4].set_label(match_info['comms'])
+        self.scoreboardMenu.get_children()[0].set_label(match_info['description'])
+        self.scoreboardMenu.get_children()[2].set_label(match_info['scorecard'])
+        self.scoreboardMenu.get_children()[4].set_label(match_info['comms'])
 
 
     def set_submenu_items(self, match_item, match_info):
@@ -509,7 +514,7 @@ class CricInd:
         match_item['gtk_commentary'].set_label(match_info['comms'])
 
     def update_menu_icon(self, match_item):
-
+        print ICON_PREFIX + match_item['last_ball'] 
         match_item['gtk_menu'].set_image(Gtk.Image.new_from_icon_name(ICON_PREFIX + match_item['last_ball'], Gtk.IconSize.BUTTON))
 
 def run():
