@@ -35,6 +35,11 @@ Install (PyPI)
 ::
 
  sudo pip install -i https://pypi.python.org/pypi cricket_score_indicator
+ 
+ If icons are not working then use ::
+  sudo git-update-icon-cache /usr/share/icons/hicolor
+  sudo git-update-icon-cache /usr/share/icons/ubuntu-mono-dark
+  sudo git-update-icon-cache /usr/share/icons/ubuntu-mono-light
 
 Install (PPA)
 -------------
