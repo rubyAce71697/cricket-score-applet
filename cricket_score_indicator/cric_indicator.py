@@ -21,7 +21,7 @@ from cricket_score_indicator.espn_scrap import get_matches_summary, get_match_da
 # the timeout between each fetch
 REFRESH_INTERVAL = 10 # second(s)
 ICON_PREFIX= "cricscore_indicator-"
-ICON_SUFFIX = ".png"
+ICON_SUFFIX = ""
 
 # DEBUG=1
 # from os import path
@@ -39,7 +39,7 @@ class CricInd:
         Initialize appindicator and other menus
         """
         self.indicator = appindicator.Indicator.new("cricket-indicator",
-                            ICON_PREFIX + DEFAULT_ICON ,
+                            ICON_PREFIX + DEFAULT_ICON+ ICON_SUFFIX ,
                             appindicator.IndicatorCategory.APPLICATION_STATUS)
         # if DEBUG:
         #     self.indicator.set_icon_theme_path(DARK_ICONS)
@@ -279,7 +279,7 @@ class CricInd:
                 "last_ball":                 match_info['last_ball'],
                 }
 
-        match_item['gtk_menu'].set_image(Gtk.Image.new_from_icon_name(ICON_PREFIX + match_info['last_ball'], Gtk.IconSize.BUTTON))
+        match_item['gtk_menu'].set_image(Gtk.Image.new_from_icon_name(ICON_PREFIX + match_info['last_ball'] + ICON_SUFFIX, Gtk.IconSize.BUTTON))
         match_item['gtk_menu'].set_always_show_image(True)
 
         match_item['gtk_set_as_label'].connect("activate", self.set_as_label_cb, match_item)
@@ -358,6 +358,7 @@ class CricInd:
             start = time.time() # get UNIX time
             self.update_labels()
             self.update_sublabels()
+            print self.indicator.get_icon_theme_path()
 
             duration = time.time() - start # resolution of 1 second is guaranteed
             if duration < REFRESH_INTERVAL:
@@ -481,11 +482,11 @@ class CricInd:
                     self.notification.update(
                     match_item['gtk_menu'].get_label(),
                     match_item['gtk_scorecard'].get_label() + match_item['gtk_commentary'].get_label(),
-                    ICON_PREFIX + match_info['last_ball'] 
+                    ICON_PREFIX + match_info['last_ball']  + ICON_SUFFIX
 
 
                     )
-                    print "for notification : "  + ICON_PREFIX + match_info['last_ball']
+                    print "for notification : "  + ICON_PREFIX + match_info['last_ball'] + ICON_SUFFIX
                     
                     self.notification.show()
 
@@ -494,7 +495,7 @@ class CricInd:
         self.indicator.set_label(label, "Cricket Score Indicator")
 
     def set_indicator_icon(self, icon):
-        self.indicator.set_icon(ICON_PREFIX + icon)
+        self.indicator.set_icon(ICON_PREFIX + icon+ ICON_SUFFIX)
 
     def add_menu(self, widget, pos):
         self.indicator.get_menu().insert(widget, pos)
@@ -514,8 +515,8 @@ class CricInd:
         match_item['gtk_commentary'].set_label(match_info['comms'])
 
     def update_menu_icon(self, match_item):
-        print ICON_PREFIX + match_item['last_ball'] 
-        match_item['gtk_menu'].set_image(Gtk.Image.new_from_icon_name(ICON_PREFIX + match_item['last_ball'], Gtk.IconSize.BUTTON))
+        print ICON_PREFIX + match_item['last_ball']  + ICON_SUFFIX
+        match_item['gtk_menu'].set_image(Gtk.Image.new_from_icon_name(ICON_PREFIX + match_item['last_ball'] + ICON_SUFFIX, Gtk.IconSize.BUTTON))
 
 def run():
     """

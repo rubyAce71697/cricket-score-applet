@@ -12,7 +12,7 @@ if (sys.version_info[0]*10 + sys.version_info[1]) < 26:
 
 setup(
 	name             = "cricket_score_indicator",
-	version          = "4.0",
+	version          = "4.0.1",
 	author           = "Nishant Kukreja, Abhishek",
 	author_email     = "kukreja34@gmail.com",
         maintainer       = "Abhishek",
@@ -22,9 +22,9 @@ setup(
 	keywords         = "Cricket Scores Live Indicator Applet AppIndicator Unity GTK",
 	url              = "https://github.com/rubyAce71697/cricket-score-applet",
 	packages         = ["cricket_score_indicator"],
-	data_files       = [(sys.prefix + "/share/icons/hicolor/16x16/apps", glob.glob("icons/dark/*")),
-	                    (sys.prefix + "/share/icons/ubuntu-mono-dark/apps/22", glob.glob("icons/dark/*")),
-	                    (sys.prefix + "/share/icons/ubuntu-mono-light/apps/22", glob.glob("icons/light/*")),
+	data_files       = [ (sys.prefix + "/share/icons/hicolor/24x24/apps", glob.glob("icons/dark/*")),
+	                    (sys.prefix + "/share/icons/ubuntu-mono-dark/apps/24", glob.glob("icons/dark/*")),
+	                    (sys.prefix + "/share/icons/ubuntu-mono-light/apps/24", glob.glob("icons/light/*")),
 	                    (sys.prefix + "/share/applications", ["cricscore_indicator.desktop"])],
 	scripts          = ["cricscore_indicator"],
 	long_description = open("README").read(),
