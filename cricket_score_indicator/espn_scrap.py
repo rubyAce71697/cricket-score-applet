@@ -33,6 +33,7 @@ match_info is the dict returned by both functions.
     comms             : live commentary text
     last_ball         : result of the most recent ball e.g. '1', 'W', '0' etc.
     intl              : flag for international/domestic matches; True -> international match
+    status            : status of the match e.g. Innings break, Day2-Session 1 etc.
 """
 
 def get_matches_summary():
@@ -88,14 +89,15 @@ def get_matches_summary():
             )
 
         match_info = {
-                'id':          m_id,
-                'url':         m_val['url'],
-                'scoreline':   summaryline,
-                'scorecard':   "Loading",
-                'description': "Loading",
-                'comms':       "",
-                'last_ball':   DEFAULT_ICON,
-                'intl':        m_id in intl
+                'id'            :           m_id,
+                'url'           :           m_val['url'],
+                'scoreline'     :           summaryline,
+                'scorecard'     :           "Loading",
+                'description'   :           "Loading",
+                'comms'         :           "",
+                'last_ball'     :           DEFAULT_ICON,
+                'intl'          :           m_id in intl,
+                'status'        :           ""
                 }
         if m_id in intl:
             intl_matches.append(match_info)
@@ -129,6 +131,20 @@ def get_match_data(match_url):
     # match['description'] = '\n'.join(json_data['description'].replace(',', '\n'))
     # HACK: assumes a single space is followed by ','; replace with above line in case of failure
     match['description'] = json_data['description'].replace(', ', '\n')
+
+    ########################################
+
+    ### setting status for match
+
+    status =  json_data['live']['break'] + "\n" if json_data['live']['break'] != "" else ""
+
+    match['status'] = status
+    print (match['status'])
+
+
+
+
+
 
     ########################################
 

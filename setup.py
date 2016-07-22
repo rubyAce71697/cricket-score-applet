@@ -12,7 +12,7 @@ if (sys.version_info[0]*10 + sys.version_info[1]) < 26:
 
 setup(
 	name             = "cricket_score_indicator",
-	version          = "4.0.1",
+	version          = "indicator_label+status 4.0.1",
 	author           = "Nishant Kukreja, Abhishek",
 	author_email     = "kukreja34@gmail.com",
         maintainer       = "Abhishek",

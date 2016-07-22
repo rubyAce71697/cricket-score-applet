@@ -236,6 +236,7 @@ class CricInd:
         match_item['gtk_separator_4'].hide()
 
         match_item['last_ball'] = DEFAULT_ICON   # set to default
+        match_item['status'] = ""
 
         # force update in current cycle
         
@@ -277,6 +278,7 @@ class CricInd:
                 'id':                        match_info['id'],
                 'url':                       match_info['url'],
                 "last_ball":                 match_info['last_ball'],
+                "status" :                   match_info['status']
                 }
 
         match_item['gtk_menu'].set_image(Gtk.Image.new_from_icon_name(ICON_PREFIX + match_info['last_ball'] + ICON_SUFFIX, Gtk.IconSize.BUTTON))
@@ -318,8 +320,9 @@ class CricInd:
         """
         # the user has selected this 'm_id' as current label, so we remember it
         self.label_match_id = match_item['id']
-
-        self.set_indicator_label(match_item['gtk_menu'].get_label())
+        label = match_item['gtk_menu'].get_label()
+        label += "--" if match_item['status'] else ""
+        self.set_indicator_label(label )
         self.set_indicator_icon(match_item['last_ball'])
 
     def scroll_event_cb(self, obj, delta, direction):
@@ -423,7 +426,14 @@ class CricInd:
 
             if not m_id_set and (self.label_match_id is None or match_info['id'] == self.label_match_id):
                 self.label_match_id = match_info['id']
-                GObject.idle_add(self.set_indicator_label, match_info['scoreline'])
+                label =   match_info['scoreline']
+                label +=  " -- "  if len(self.get_indicator_label().split(" -- "))>1 else ""
+                #label +=  self.get_indicator_label().split(" -- ")[1] if len(self.get_indicator_label().split(" -- ")) else ""
+                print len(self.get_indicator_label().split(" -- "))
+                if len(self.get_indicator_label().split(" -- "))>1:
+                    label += self.get_indicator_label().split(" -- ")[1]
+                print "label while updating: " + label
+                GObject.idle_add(self.set_indicator_label,label)
                 m_id_set = True
 
             all_m_id.add(match_info['id'])
@@ -468,6 +478,8 @@ class CricInd:
             return
         # we've been away for a while, some things may have changed
         if match_item['gtk_check'].get_active():
+            match_item['status'] = match_info['status']
+            print "match_item status: " + match_item['status']
             match_item['last_ball'] = match_info['last_ball']
 
             GObject.idle_add(self.update_menu_icon, match_item)
@@ -489,10 +501,17 @@ class CricInd:
                     print "for notification : "  + ICON_PREFIX + match_info['last_ball'] + ICON_SUFFIX
                     
                     self.notification.show()
+        else:
+
+            match_item['status'] = ""
 
     ### Helpers
     def set_indicator_label(self, label):
+        print "label receivied: " + label
         self.indicator.set_label(label, "Cricket Score Indicator")
+
+    def get_indicator_label(self):
+        return self.indicator.get_label()
 
     def set_indicator_icon(self, icon):
         self.indicator.set_icon(ICON_PREFIX + icon+ ICON_SUFFIX)
