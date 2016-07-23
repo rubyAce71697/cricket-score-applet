@@ -42,7 +42,7 @@ Install (PyPI)
 --------------
 ::
 
- sudo pip install -i https://pypi.python.org/pypi cricket_score_indicator
+ sudo pip install cricket_score_indicator
 
  If icons are not working then use ::
   sudo git-update-icon-cache /usr/share/icons/hicolor
