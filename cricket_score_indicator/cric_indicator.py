@@ -130,7 +130,7 @@ class CricInd:
         self.menu.append(quit_item)
 
         self.indicator.set_menu(self.menu)
-        
+
         #create menu for middle click
         self.create_scorecard_menu()
 
@@ -192,19 +192,19 @@ class CricInd:
             return
 
         # simulate the button-click
-        
+
         match_item['gtk_check'].set_active(True)
         self.scoreboardMenu.get_children()[0].set_label(match_item['gtk_menu'].get_label())
-        self.scoreboardMenu.get_children()[2].set_label(match_item['gtk_scorecard'].get_label()) 
-        self.scoreboardMenu.get_children()[4].set_label(match_item['gtk_commentary'].get_label())       
+        self.scoreboardMenu.get_children()[2].set_label(match_item['gtk_scorecard'].get_label())
+        self.scoreboardMenu.get_children()[4].set_label(match_item['gtk_commentary'].get_label())
 
-       
+
        #    self.indicator.set_menu(self.scoreboardMenu)
         self.scoreboardMenu.popup(None,self.menu,None,None,0,0)
 
-       
 
-            
+
+
 
 
 
@@ -239,7 +239,7 @@ class CricInd:
         match_item['status'] = ""
 
         # force update in current cycle
-        
+
         self.update_menu_icon(match_item)
         #GObject.idle_add(match_item['gtk_menu'].set_image,Gtk.Image.new_from_icon_name(ICON_PREFIX + match_item['last_ball'], Gtk.IconSize.BUTTON))
         if match_item['id'] == self.label_match_id:
@@ -503,25 +503,25 @@ class CricInd:
 
                 print len(self.get_indicator_label().split("  "))
                 label = self.get_indicator_label().split("  ")[0]
-                
+
                 label += "  " if match_item['status'].strip() else ""
                 label += match_item['status'].strip() if match_item['status'].strip() else ""
                 print "label in updation: " + label
                 GObject.idle_add(self.set_indicator_label,label)
                 GObject.idle_add(self.set_indicator_icon, match_info['last_ball'])
                 GObject.idle_add(self.setScoreBoardMenu,match_info)
-                
-                if match_item['last_ball'] in ['4','6','W',]:
-                    
+
+                if match_item['last_ball'] in ['4','6','W']:
+
                     self.notification.update(
                     match_item['gtk_menu'].get_label(),
-                    match_item['gtk_scorecard'].get_label() + match_item['gtk_commentary'].get_label(),
+                    match_item['gtk_scorecard'].get_label() + "\n" +    ("\n").join(match_item['gtk_commentary'].get_label().split("\n")[:2]),
                     ICON_PREFIX + match_info['last_ball']  + ICON_SUFFIX
 
 
                     )
                     print "for notification : "  + ICON_PREFIX + match_info['last_ball'] + ICON_SUFFIX
-                    
+
                     self.notification.show()
         else:
 
