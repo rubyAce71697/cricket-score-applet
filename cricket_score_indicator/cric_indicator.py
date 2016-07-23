@@ -244,6 +244,8 @@ class CricInd:
         #GObject.idle_add(match_item['gtk_menu'].set_image,Gtk.Image.new_from_icon_name(ICON_PREFIX + match_item['last_ball'], Gtk.IconSize.BUTTON))
         if match_item['id'] == self.label_match_id:
             self.set_indicator_icon(match_item['last_ball'])
+            label = self.get_indicator_label().split("  ")
+            self.set_indicator_label(label[0])
 
 
     def expand_submenu(self, match_item):
@@ -321,7 +323,9 @@ class CricInd:
         # the user has selected this 'm_id' as current label, so we remember it
         self.label_match_id = match_item['id']
         label = match_item['gtk_menu'].get_label()
-        label += "--" if match_item['status'] else ""
+
+        label += "  " if match_item['status'].strip() else ""
+        label += match_item['status'].strip()
         self.set_indicator_label(label )
         self.set_indicator_icon(match_item['last_ball'])
 
@@ -426,13 +430,23 @@ class CricInd:
 
             if not m_id_set and (self.label_match_id is None or match_info['id'] == self.label_match_id):
                 self.label_match_id = match_info['id']
+
+
                 label =   match_info['scoreline']
-                label +=  " -- "  if len(self.get_indicator_label().split(" -- "))>1 else ""
+
+
+                print len(self.get_indicator_label().split("  "))
+                label +=  "  "  if len(self.get_indicator_label().split("  "))>1 and match_info['id'] in self.open_scorecard else ""
                 #label +=  self.get_indicator_label().split(" -- ")[1] if len(self.get_indicator_label().split(" -- ")) else ""
-                print len(self.get_indicator_label().split(" -- "))
-                if len(self.get_indicator_label().split(" -- "))>1:
-                    label += self.get_indicator_label().split(" -- ")[1]
+                print len(self.get_indicator_label().split("  ") and match_info['status'])
+                if len(self.get_indicator_label().split("  "))>1 and match_info['id'] in self.open_scorecard:
+                    label += self.get_indicator_label().split("  ")[1]
+
+
+
                 print "label while updating: " + label
+
+
                 GObject.idle_add(self.set_indicator_label,label)
                 m_id_set = True
 
@@ -486,6 +500,14 @@ class CricInd:
             GObject.idle_add(self.set_submenu_items, match_item, match_info)
 
             if match_item['id'] == self.label_match_id:
+
+                print len(self.get_indicator_label().split("  "))
+                label = self.get_indicator_label().split("  ")[0]
+                
+                label += "  " if match_item['status'].strip() else ""
+                label += match_item['status'].strip() if match_item['status'].strip() else ""
+                print "label in updation: " + label
+                GObject.idle_add(self.set_indicator_label,label)
                 GObject.idle_add(self.set_indicator_icon, match_info['last_ball'])
                 GObject.idle_add(self.setScoreBoardMenu,match_info)
                 
