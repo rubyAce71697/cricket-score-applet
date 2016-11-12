@@ -18,7 +18,7 @@ KDE is not supported.
 
 Ubuntu/Debian users should use the PPA which automatically pulls dependencies.
 
-ChangeLog - 5
+ChangeLog - 4.5
 ====================
 * The length of indicator is reduced.
 * User needs to open the scorecard in order to see the reduced information
