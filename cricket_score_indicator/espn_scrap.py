@@ -89,15 +89,16 @@ def get_matches_summary():
             )
 
         match_info = {
-                'id'            :           m_id,
-                'url'           :           m_val['url'],
-                'scoreline'     :           summaryline,
-                'scorecard'     :           "Loading",
-                'description'   :           "Loading",
-                'comms'         :           "",
-                'last_ball'     :           DEFAULT_ICON,
-                'intl'          :           m_id in intl,
-                'status'        :           ""
+                'id'                :           m_id,
+                'url'               :           m_val['url'],
+                'scoreline'         :           summaryline,
+                'scorecard'         :           "Loading",
+                'description'       :           "Loading",
+                'comms'             :           "",
+                'last_ball'         :           DEFAULT_ICON,
+                'intl'              :           m_id in intl,
+                'status'            :           "",
+                'label_scoreline'   :           ""
                 }
         if m_id in intl:
             intl_matches.append(match_info)
@@ -144,17 +145,33 @@ def get_match_data(match_url):
 
 
 
-
+    match['label_scoreline'] = ""
 
     ########################################
+
 
     ### setting 'scorecard'
     scorecard = json_data['live']['status'] + "\n" +\
                           (json_data['live']['break'] + "\n" if json_data['live']['break'] != "" else "")
 
     # 'score and RR' line
+
+    print (json_data['live']['innings'])
     if json_data['live']['innings']:
-    # NOTE: there's also json_data['innings'] which is an array of all the innings; 'live':'innings' only tracks the current one
+        print (json_data['live']['innings'])
+
+        ### 'setting shortlabel'
+        shortlabel = "{team_name}: {score}/{wickets} Over ({over})".format(\
+                                team_name   = [t['team_abbreviation'].strip() for t in json_data['team'] if t['team_id'] == json_data['live']['innings']['team_id']][0],
+                                score       = json_data['live']['innings']['runs'],
+                                wickets     = json_data['live']['innings']['wickets'],
+                                over        = json_data['live']['innings']['overs'],
+
+                                )
+        match['label_scoreline'] = shortlabel
+
+
+        # NOTE: there's also json_data['innings'] which is an array of all the innings; 'live':'innings' only tracks the current one
         scorecard += "\n{team_name}: {score}/{wickets}   Curr RR: {run_rate}{required_run_rate}".format(\
                             team_name         = [t['team_name'] for t in json_data['team'] if t['team_id'] == json_data['live']['innings']['team_id']][0],
                             score             = json_data['live']['innings']['runs'],

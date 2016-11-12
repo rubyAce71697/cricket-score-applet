@@ -280,8 +280,13 @@ class CricInd:
                 'id':                        match_info['id'],
                 'url':                       match_info['url'],
                 "last_ball":                 match_info['last_ball'],
-                "status" :                   match_info['status']
+                "status" :                   match_info['status'],
+
+                #added as part of shortlabel branch
+                "label_scoreline":           match_info['label_scoreline']
+
                 }
+
 
         match_item['gtk_menu'].set_image(Gtk.Image.new_from_icon_name(ICON_PREFIX + match_info['last_ball'] + ICON_SUFFIX, Gtk.IconSize.BUTTON))
         match_item['gtk_menu'].set_always_show_image(True)
@@ -322,12 +327,25 @@ class CricInd:
         """
         # the user has selected this 'm_id' as current label, so we remember it
         self.label_match_id = match_item['id']
-        label = match_item['gtk_menu'].get_label()
 
-        label += "  " if match_item['status'].strip() else ""
-        label += match_item['status'].strip()
+        # removed as part of shortlabel branch
+        """
+        label = match_item['gtk_menu'].get_label()
         self.set_indicator_label(label )
         self.set_indicator_icon(match_item['last_ball'])
+        """
+        if not match_item['id'] in self.open_scorecard:
+            label = match_item['gtk_menu'].get_label()
+            print "label while updating: " + label
+            GObject.idle_add(self.set_indicator_label,label)
+
+        else:
+            label = match_item['label_scoreline']
+            print "label while updating: " + label
+            GObject.idle_add(self.set_indicator_label,label)
+
+        self.set_indicator_icon(match_item['last_ball'])
+
 
     def scroll_event_cb(self, obj, delta, direction):
         """
@@ -428,12 +446,32 @@ class CricInd:
             else:
                 GObject.idle_add(self.contract_submenu, curr_item)
 
+            # if current id is set as label
             if not m_id_set and (self.label_match_id is None or match_info['id'] == self.label_match_id):
                 self.label_match_id = match_info['id']
 
+                # added in branch shortlabel: Requirement: DD - 170/6 Over(20.0)
+                #Logic: if current is set_as_label and open scorecard --> no update will be done since it is updated during updating submenu
+                print not match_info['id'] in self.open_scorecard
+                print not match_info['label_scoreline']
+                """
 
-                label =   match_info['scoreline']
+                {u'team_id': u'3', u'remaining_wickets': u'5', u'event': u'0', u'live_current_name': u'current innings', u'over_limit': u'0.0', u'lead': u'86', u'batted': u'1', u'bowling_team_id': u'2', u'live_current': u'1', u'event_name': None, u'wickets': u'5', u'over_split_limit': u'0.0', u'overs': u'55.0', u'over_limit_run_rate': None, u'runs': u'171', u'balls': u'330', u'remaining_balls': u'0', u'target': u'0', u'remaining_overs': u'0.0', u'innings_number': u'2', u'bpo': u'6', u'required_run_rate': None, u'ball_limit': u'0', u'batting_team_id': u'3', u'run_rate': u'3.10'}
 
+                """
+
+                if not match_info['id'] in self.open_scorecard or not match_info['label_scoreline']  :
+                    label =   match_info['scoreline']
+                    print "label while updating: " + label
+                    GObject.idle_add(self.set_indicator_label,label)
+
+
+
+
+
+
+                """
+                    :: removed in shortlabel branch
 
                 print len(self.get_indicator_label().split("  "))
                 label +=  "  "  if len(self.get_indicator_label().split("  "))>1 and match_info['id'] in self.open_scorecard else ""
@@ -441,13 +479,16 @@ class CricInd:
                 print len(self.get_indicator_label().split("  ") and match_info['status'])
                 if len(self.get_indicator_label().split("  "))>1 and match_info['id'] in self.open_scorecard:
                     label += self.get_indicator_label().split("  ")[1]
+                """
+                """
+                    label in updation:
+                """
 
 
 
-                print "label while updating: " + label
 
 
-                GObject.idle_add(self.set_indicator_label,label)
+
                 m_id_set = True
 
             all_m_id.add(match_info['id'])
@@ -500,14 +541,20 @@ class CricInd:
             GObject.idle_add(self.set_submenu_items, match_item, match_info)
 
             if match_item['id'] == self.label_match_id:
-
+                """
+                    :: Removed in shortlabel branch
                 print len(self.get_indicator_label().split("  "))
                 label = self.get_indicator_label().split("  ")[0]
-
                 label += "  " if match_item['status'].strip() else ""
                 label += match_item['status'].strip() if match_item['status'].strip() else ""
-                print "label in updation: " + label
-                GObject.idle_add(self.set_indicator_label,label)
+                """
+                #added in shotlabel branch
+                match_item['label_scoreline'] = match_info['label_scoreline']
+                if match_item['label_scoreline']:
+                    label = match_info['label_scoreline']
+                    print "label in updation: " + label
+                    GObject.idle_add(self.set_indicator_label,label)
+
                 GObject.idle_add(self.set_indicator_icon, match_info['last_ball'])
                 GObject.idle_add(self.setScoreBoardMenu,match_info)
 
