@@ -237,6 +237,7 @@ class CricInd:
 
         match_item['last_ball'] = DEFAULT_ICON   # set to default
         match_item['status'] = ""
+        match_item['label_scoreline'] = ""
 
         # force update in current cycle
 
@@ -244,8 +245,7 @@ class CricInd:
         #GObject.idle_add(match_item['gtk_menu'].set_image,Gtk.Image.new_from_icon_name(ICON_PREFIX + match_item['last_ball'], Gtk.IconSize.BUTTON))
         if match_item['id'] == self.label_match_id:
             self.set_indicator_icon(match_item['last_ball'])
-            label = self.get_indicator_label().split("  ")
-            self.set_indicator_label(label[0])
+            self.set_indicator_label(match_item['gtk_menu'].get_label())
 
 
     def expand_submenu(self, match_item):
@@ -531,7 +531,7 @@ class CricInd:
 
             GObject.idle_add(self.update_menu_icon, match_item)
             GObject.idle_add(self.set_submenu_items, match_item, match_info)
-
+            match_item['label_scoreline'] = match_info['label_scoreline']
             if match_item['id'] == self.label_match_id:
                 """
                     :: Removed in shortlabel branch
@@ -541,7 +541,7 @@ class CricInd:
                 label += match_item['status'].strip() if match_item['status'].strip() else ""
                 """
                 #added in shotlabel branch
-                match_item['label_scoreline'] = match_info['label_scoreline']
+
                 if match_item['label_scoreline']:
                     label = match_info['label_scoreline']
                     print "label in updation: " + label
