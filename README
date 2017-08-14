@@ -1,3 +1,6 @@
+# DOESN'T WORK!!
+ESPNcricinfo changed its (unofficial) JSON API in July 2017.  We currently have *NO* plans of adapting the application to the new API.
+See #26 for more details and updates.  
 
 =======================================================
 Cricket Score Indicator |pypi-version| |pypi-downloads|
