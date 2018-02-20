@@ -5,6 +5,8 @@ import gi.repository
 
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, Gdk, GObject
+
+gi.require_version('Notify', '0.7')
 from gi.repository import Notify
 
 gi.require_version('AppIndicator3', '0.1')
@@ -375,7 +377,7 @@ class CricInd:
             start = time.time() # get UNIX time
             self.update_labels()
             self.update_sublabels()
-            print self.indicator.get_icon_theme_path()
+            #print self.indicator.get_icon_theme_path()
 
             duration = time.time() - start # resolution of 1 second is guaranteed
             if duration < REFRESH_INTERVAL:
@@ -388,6 +390,7 @@ class CricInd:
         Maybe add or remove menuitems as per the fetched data
         """
         intl_matches, dom_matches = get_matches_summary()
+        print intl_matches, dom_matches
 
         if intl_matches == None:    # request failed! we've got nothing new
             return
