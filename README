@@ -1,9 +1,11 @@
 ==============
-DOESN'T WORK!!
+WORKING AGAIN!!
 ==============
 
-ESPNcricinfo changed its (unofficial) JSON API in July 2017.  We currently have *NO* plans of adapting the application to the new API.
-See `#26 <https://github.com/rubyAce71697/cricket-score-applet/issues/26>` for more details and updates.  
+New ESPNCricInfo Data URL ::
+	
+	http://api.espncricinfo.com/netstorage/summary.json
+ 
 
 =======================================================
 Cricket Score Indicator |pypi-version| |pypi-downloads|
@@ -24,20 +26,11 @@ KDE is not supported.
 
 Ubuntu/Debian users should use the PPA which automatically pulls dependencies.
 
-ChangeLog - 4.5
+ChangeLog - 5.0
 ====================
-* The length of indicator is reduced.
-* User needs to open the scorecard in order to see the reduced information
-::
+* The URL has been modified
+* The inidcator is working again
 
- NZ:  41/0 (10.1 ov)
-
-ChangeLog - 4.0
-----------------
-* Scroll over panel text/icon to cycle through the match list
-* Middle-click on panel text/icon to expand the current match's scorecard
-* Added "Open in browser" option
-* Enabled light theme (ubuntu-mono-light) support
 
 .. image:: screenshots/out.gif
 
