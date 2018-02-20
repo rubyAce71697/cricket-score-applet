@@ -4,8 +4,13 @@ from __future__ import print_function
 import sys
 import requests
 
-BASE_URL = "http://espncricinfo.com"
+BASE_URL = "http://api.espncricinfo.com"
+#BASE_URL = "http://fcast.us-west-2.espncdn.com"
+
+
+
 SUMMARY_URL = BASE_URL + "/netstorage/summary.json"
+#SUMMARY_URL = BASE_URL + "/FastcastService/pubsub/profiles/12000/topic/event-topevents-espncricinfo-in-en/message/253105/checkpoint"
 # remove `html' and add `json'
 MATCH_URL_JSON = lambda match_url: BASE_URL + match_url[:-4] + "json"
 MATCH_URL_HTML = lambda match_url: BASE_URL + match_url
@@ -104,7 +109,7 @@ def get_matches_summary():
             intl_matches.append(match_info)
         else:
             dom_matches.append(match_info)
-
+    
     return intl_matches, dom_matches
 
 def get_match_data(match_url):
@@ -113,6 +118,7 @@ def get_match_data(match_url):
     """
 
     try:
+        #print match_url
         json_data = (requests.get(MATCH_URL_JSON(match_url), headers=REQUEST_PARAM, timeout=10)).json()
     except Exception as err:
         print ('get_match_data: Exception: ', err, file=sys.stderr)
@@ -285,4 +291,5 @@ def get_match_data(match_url):
                                                                 if x['dismissal'] != "" else "",
                                                     ) for x in json_data['comms'][0]['ball'] if 'event' in x)
 
+    #print str(match)
     return match
