@@ -6,3 +6,4 @@ tags
 MANIFEST
 dist
 test
+*.vscode
